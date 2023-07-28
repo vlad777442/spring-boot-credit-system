@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class ApplicationStatusHistoryDTO {
-    private Enum status;
+    private ApplicationStatusType status;
     private LocalDateTime time;
-    private Enum changeType;
+    private ChangeType changeType;
 }

@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 @Data
 public class EmploymentDTO {
-    private Enum employmentStatus;
+    private EmploymentStatusType employmentStatus;
     private String employerINN;
     private BigDecimal salary;
     private Enum position;

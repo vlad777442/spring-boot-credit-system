@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class EmailMessage {
     private String address;
-    private Enum theme;
+    private EmailThemeType theme;
     private Long applicationId;
 }
