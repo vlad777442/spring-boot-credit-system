@@ -1,4 +1,4 @@
-package com.neoflex.conveyor.dto;
+package com.neoflex.conveyor.dto.enumType;
 
 public enum EmailThemeType {
     WELCOME,
