@@ -4,12 +4,14 @@ import com.neoflex.conveyor.dto.enumType.GenderType;
 import com.neoflex.conveyor.dto.enumType.MaritalStatusType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
+@Builder
 @Schema(description = "Scoring data dto")
 public class ScoringDataDTO {
     @NotNull(message = "Loan amount cannot be null")
