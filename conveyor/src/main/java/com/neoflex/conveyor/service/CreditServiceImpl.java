@@ -122,8 +122,7 @@ public class CreditServiceImpl implements CreditService {
         return interestRate;
     }
 
-    @Override
-    public void isCreditApplicationValid(ScoringDataDTO scoringDataDTO) {
+    private void isCreditApplicationValid(ScoringDataDTO scoringDataDTO) {
         log.info("VALIDATING CREDIT APPLICATION");
         List<ScoringDataException> exceptions = new ArrayList<>();
 
@@ -167,7 +166,7 @@ public class CreditServiceImpl implements CreditService {
     @Override
     public BigDecimal calculateMonthlyPayment(ScoringDataDTO scoringData, BigDecimal interestRate) {
         log.info("CALCULATING MONTHLY PAYMENT");
-        BigDecimal monthlyRate = interestRate.divide(BigDecimal.valueOf(ANNUAL_PERIOD), 2, RoundingMode.HALF_UP).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal monthlyRate = interestRate.divide(BigDecimal.valueOf(ANNUAL_PERIOD), 4, RoundingMode.HALF_UP).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_DOWN);
 
         BigDecimal annualCoeff = monthlyRate.multiply(
                         (monthlyRate.add(BigDecimal.ONE)).pow(scoringData.getTerm())
@@ -181,8 +180,7 @@ public class CreditServiceImpl implements CreditService {
         return monthlyPayment;
     }
 
-    @Override
-    public List<PaymentScheduleElement> generatePaymentSchedule(ScoringDataDTO scoringData, BigDecimal monthlyPayment,
+    private List<PaymentScheduleElement> generatePaymentSchedule(ScoringDataDTO scoringData, BigDecimal monthlyPayment,
                                                                  BigDecimal monthlyRate) {
         log.info("GENERATING PAYMENT SCHEDULE");
         List<PaymentScheduleElement> schedule = new ArrayList<>();

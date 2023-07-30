@@ -67,8 +67,7 @@ public class LoanServiceImpl implements LoanService {
         return offerDTO;
     }
 
-    @Override
-    public void isLoanApplicationValid(LoanApplicationRequestDTO requestDTO) {
+    private void isLoanApplicationValid(LoanApplicationRequestDTO requestDTO) {
         log.info("CHECKING IF LOAN APPLICATION IS VALID");
         List<LoanApplicationException> exceptions = new ArrayList<>();
         LocalDate currentDate = LocalDate.now();

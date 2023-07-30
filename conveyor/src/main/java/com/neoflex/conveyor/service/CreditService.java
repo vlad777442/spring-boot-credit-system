@@ -14,12 +14,7 @@ public interface CreditService {
     BigDecimal calculateCreditRateByMaritalStatus(ScoringDataDTO scoringDataDTO, BigDecimal interestRate);
     BigDecimal calculateCreditRateByDependents(ScoringDataDTO scoringDataDTO, BigDecimal interestRate);
     BigDecimal calculateCreditRateByAge(ScoringDataDTO scoringDataDTO, BigDecimal interestRate);
-    void isCreditApplicationValid(ScoringDataDTO scoringDataDTO);
     BigDecimal calculatePSK(ScoringDataDTO scoringData, BigDecimal interestRate);
     BigDecimal calculateMonthlyPayment(ScoringDataDTO scoringData, BigDecimal interestRate);
-    List<PaymentScheduleElement> generatePaymentSchedule(ScoringDataDTO scoringData, BigDecimal monthlyPayment, BigDecimal monthlyRate);
-
-
-
 
 }
