@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LoanServiceImplTest {
@@ -41,6 +43,10 @@ class LoanServiceImplTest {
 
     @Test
     void getLoanOffers() {
+        LoanApplicationRequestDTO loanApplicationRequestDTO = mock(LoanApplicationRequestDTO.class);
+        when(loanApplicationRequestDTO.getAmount()).thenReturn(BigDecimal.valueOf(100000));
+        when(loanApplicationRequestDTO.getTerm()).thenReturn(12);
+        when(loanApplicationRequestDTO.getBirthdate()).thenReturn(LocalDate.of(1995, 10, 15));
 
 
         LoanOfferDTO loanOffer1 = LoanOfferDTO.builder()
@@ -91,7 +97,7 @@ class LoanServiceImplTest {
                 .sorted(Comparator.comparing(LoanOfferDTO::getRate).reversed())
                 .collect(Collectors.toList());
 
-        assertEquals(expected, loanService.getLoanOffers(requestDTO));
+        assertEquals(expected, loanService.getLoanOffers(loanApplicationRequestDTO));
     }
 
     @Test
@@ -107,7 +113,17 @@ class LoanServiceImplTest {
                 .isSalaryClient(false)
                 .build();
 
-        LoanOfferDTO actual = loanService.generateLoanOffer(1L, false, false, requestDTO);
+        LoanApplicationRequestDTO loanApplicationRequestDTO = mock(LoanApplicationRequestDTO.class);
+        when(loanApplicationRequestDTO.getAmount()).thenReturn(BigDecimal.valueOf(100000));
+        when(loanApplicationRequestDTO.getTerm()).thenReturn(12);
+        when(loanApplicationRequestDTO.getBirthdate()).thenReturn(LocalDate.of(1995, 10, 15));
+
+//        LoanOfferDTO actual = mock(LoanOfferDTO.class);
+//        when(actual.getRate()).thenReturn(BigDecimal.valueOf(15.0));
+//        when(actual.getTerm()).thenReturn(12);
+//        when(actual.getMonthlyPayment()).thenReturn(BigDecimal.valueOf(9583.33));
+
+        LoanOfferDTO actual = loanService.generateLoanOffer(1L, false, false, loanApplicationRequestDTO);
         assertEquals(expected, actual);
     }
 
