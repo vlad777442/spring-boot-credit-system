@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Builder
 @Schema(description = "Loan application dto")
 public class LoanApplicationRequestDTO {
-    @Schema(name = "Loan amount", example = "500000")
+    @Schema(description = "Loan amount", example = "500000")
     @NotNull(message = "Loan amount cannot be null")
     @DecimalMin(value = "10000", message = "Loan amount must be greater than or equal to 10000")
     private BigDecimal amount;
@@ -41,7 +41,7 @@ public class LoanApplicationRequestDTO {
 
     @Schema(description = "Email address", example = "john.doe@example.com")
     @NotBlank(message = "Email address cannot be blank")
-    @Pattern(regexp = "[\\w\\.]{2,50}@[\\w\\.]{2,20}", message = "Invalid email address format")
+    @Email
     private String email;
 
     @Schema(description = "Birthdate", example = "1990-01-01")
