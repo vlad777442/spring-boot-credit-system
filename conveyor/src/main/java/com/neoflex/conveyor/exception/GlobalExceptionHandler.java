@@ -27,4 +27,14 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(ScoringDataException.class)
+    public ResponseEntity<String> handleScoringDataException(ScoringDataException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(LoanApplicationException.class)
+    public ResponseEntity<String> handleLoanApplicationException(LoanApplicationException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ex.getMessage());
+    }
 }
