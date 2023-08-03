@@ -1,7 +1,7 @@
-package com.neoflex.conveyor.dto;
+package com.neoflex.conveyor.dto.api.request;
 
-import com.neoflex.conveyor.dto.enumType.GenderType;
-import com.neoflex.conveyor.dto.enumType.MaritalStatusType;
+import com.neoflex.conveyor.dto.enums.GenderType;
+import com.neoflex.conveyor.dto.enums.MaritalStatusType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 

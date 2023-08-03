@@ -1,7 +1,7 @@
-package com.neoflex.conveyor.dto;
+package com.neoflex.conveyor.dto.api.response;
 
-import com.neoflex.conveyor.dto.enumType.ApplicationStatusType;
-import com.neoflex.conveyor.dto.enumType.ChangeType;
+import com.neoflex.conveyor.dto.enums.ApplicationStatusType;
+import com.neoflex.conveyor.dto.enums.ChangeType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 

@@ -1,6 +1,6 @@
-package com.neoflex.conveyor.dto;
+package com.neoflex.conveyor.dto.api.request;
 
-import com.neoflex.conveyor.dto.enumType.EmailThemeType;
+import com.neoflex.conveyor.dto.enums.EmailThemeType;
 import lombok.Data;
 
 @Data
