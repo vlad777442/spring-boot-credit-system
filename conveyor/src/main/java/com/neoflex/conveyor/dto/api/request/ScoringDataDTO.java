@@ -1,6 +1,5 @@
 package com.neoflex.conveyor.dto.api.request;
 
-import com.neoflex.conveyor.dto.api.request.EmploymentDTO;
 import com.neoflex.conveyor.dto.enums.GenderType;
 import com.neoflex.conveyor.dto.enums.MaritalStatusType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,12 +14,12 @@ import java.time.LocalDate;
 @Builder
 @Schema(description = "Scoring data dto")
 public class ScoringDataDTO {
-    @Schema(description = "Loan amount", example = "500000")
+    @Schema(description = "Loan amount", example = "200000")
     @NotNull(message = "Loan amount cannot be null")
     @DecimalMin(value = "10000", message = "Loan amount must be greater than or equal to 10000")
     private BigDecimal amount;
 
-    @Schema(description = "Loan term (in months)", example = "12")
+    @Schema(description = "Loan term (in months)", example = "24")
     @NotNull(message = "Loan term cannot be null")
     @Min(value = 6, message = "Loan term must be greater than or equal to 6")
     private Integer term;
@@ -74,7 +73,7 @@ public class ScoringDataDTO {
     @NotNull(message = "Marital status cannot be null")
     private MaritalStatusType maritalStatus;
 
-    @Schema(description = "Number of dependents", example = "0")
+    @Schema(description = "Number of dependents", example = "2")
     @Min(value = 0, message = "Dependent amount cannot be negative")
     private Integer dependentAmount;
 
