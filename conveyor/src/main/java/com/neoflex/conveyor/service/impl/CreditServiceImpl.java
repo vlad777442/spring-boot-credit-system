@@ -1,12 +1,16 @@
-package com.neoflex.conveyor.service;
+package com.neoflex.conveyor.service.impl;
 
-import com.neoflex.conveyor.dto.*;
-import com.neoflex.conveyor.dto.enumType.EmploymentStatusType;
-import com.neoflex.conveyor.dto.enumType.GenderType;
-import com.neoflex.conveyor.dto.enumType.MaritalStatusType;
-import com.neoflex.conveyor.dto.enumType.PositionType;
+import com.neoflex.conveyor.dto.api.request.ScoringDataDTO;
+import com.neoflex.conveyor.dto.api.response.CreditDTO;
+import com.neoflex.conveyor.dto.api.response.PaymentScheduleElement;
+import com.neoflex.conveyor.dto.enums.EmploymentStatusType;
+import com.neoflex.conveyor.dto.enums.GenderType;
+import com.neoflex.conveyor.dto.enums.MaritalStatusType;
+import com.neoflex.conveyor.dto.enums.PositionType;
 import com.neoflex.conveyor.exception.ScoringDataException;
-import lombok.extern.log4j.Log4j2;
+import com.neoflex.conveyor.service.CreditService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,15 +21,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Log4j2
+@Slf4j
 public class CreditServiceImpl implements CreditService {
-    private static final BigDecimal BASE_INTEREST_RATE = BigDecimal.valueOf(14.0);
-    private static final Integer ANNUAL_PERIOD = 12;
-    private static final Integer MIN_SALARY_COUNT = 20;
-    private static final Integer MIN_CREDIT_AGE = 20;
-    private static final Integer MAX_CREDIT_AGE = 60;
-    private static final Integer MIN_TOTAL_WORK_EXPERIENCE = 12;
-    private static final Integer MIN_CURRENT_WORK_EXPERIENCE = 3;
+    @Value("${credit.service.BASE_INTEREST_RATE}")
+    private BigDecimal baseInterestRate;
+
+    @Value("${credit.service.ANNUAL_PERIOD}")
+    private Integer annualPeriod;
+
+    @Value("${credit.service.MIN_SALARY_COUNT}")
+    private Integer minSalaryCount;
+
+    @Value("${credit.service.MIN_CREDIT_AGE}")
+    private Integer minCreditAge;
+
+    @Value("${credit.service.MAX_CREDIT_AGE}")
+    private Integer maxCreditAge;
+
+    @Value("${credit.service.MIN_TOTAL_WORK_EXPERIENCE}")
+    private Integer minTotalWorkExperience;
+
+    @Value("${credit.service.MIN_CURRENT_WORK_EXPERIENCE}")
+    private Integer minCurrentWorkExperience;
+
+    @Value("${credit.service.scale}")
+    private Integer scale;
+
+    @Value("${credit.service.roundingMode}")
+    private RoundingMode roundingMode;
+
+    @Value("${credit.service.middlePositionDiscount}")
+    private BigDecimal middlePositionDiscount;
+
+    @Value("${credit.service.seniorPositionDiscount}")
+    private BigDecimal seniorPositionDiscount;
+
+    @Value("${credit.service.marriedDiscount}")
+    private BigDecimal marriedDiscount;
+
+    @Value("${credit.service.divorcedAdd}")
+    private BigDecimal divorcedAdd;
+
+    @Value("${credit.service.dependentsAdd}")
+    private BigDecimal dependentsAdd;
+
+    @Value("${credit.service.femaleBetween35And60Discount}")
+    private BigDecimal femaleBetween35And60Discount;
+
+    @Value("${credit.service.maleBetween30And55Discount}")
+    private BigDecimal maleBetween30And55Discount;
+
+    @Value("${credit.service.nonBinaryAdd}")
+    private BigDecimal nonBinaryAdd;
 
     @Override
     public CreditDTO calculateCreditDetails(ScoringDataDTO scoringData) {
@@ -33,11 +80,11 @@ public class CreditServiceImpl implements CreditService {
         BigDecimal interestRate = calculateInterestRate(scoringData);
         BigDecimal psk = calculatePSK(scoringData, interestRate);
         BigDecimal monthlyPayment = calculateMonthlyPayment(scoringData, interestRate);
-        BigDecimal monthlyRate = interestRate.divide(BigDecimal.valueOf(ANNUAL_PERIOD), 2, RoundingMode.HALF_UP).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal monthlyRate = interestRate.divide(BigDecimal.valueOf(annualPeriod), 2, roundingMode).divide(BigDecimal.valueOf(100), scale, roundingMode);
 
         List<PaymentScheduleElement> paymentSchedule = generatePaymentSchedule(scoringData, monthlyPayment, monthlyRate);
 
-        CreditDTO creditDTO = CreditDTO.builder()
+        return CreditDTO.builder()
                 .amount(scoringData.getAmount())
                 .term(scoringData.getTerm())
                 .rate(interestRate)
@@ -47,14 +94,12 @@ public class CreditServiceImpl implements CreditService {
                 .isSalaryClient(scoringData.getIsSalaryClient())
                 .paymentSchedule(paymentSchedule)
                 .build();
-
-        return creditDTO;
     }
 
     @Override
     public BigDecimal calculateInterestRate(ScoringDataDTO scoringData) {
         log.info("CALCULATING INTEREST RATE");
-        BigDecimal interestRate = BASE_INTEREST_RATE;
+        BigDecimal interestRate = baseInterestRate;
         isCreditApplicationValid(scoringData);
 
         interestRate = calculateCreditRateByPosition(scoringData, interestRate);
@@ -69,11 +114,12 @@ public class CreditServiceImpl implements CreditService {
     public BigDecimal calculateCreditRateByPosition(ScoringDataDTO scoringDataDTO, BigDecimal interestRate) {
         log.info("CHECKING EMPLOYMENT STATUS");
         PositionType type = scoringDataDTO.getEmployment().getPosition();
+
         if (type == PositionType.MIDDLE) {
-            interestRate = interestRate.subtract(BigDecimal.valueOf(2.0));
+            interestRate = interestRate.subtract(middlePositionDiscount);
         }
-        if (type == PositionType.SENIOR) {
-            interestRate = interestRate.subtract(BigDecimal.valueOf(4.0));
+        else if (type == PositionType.SENIOR) {
+            interestRate = interestRate.subtract(seniorPositionDiscount);
         }
 
         return interestRate;
@@ -83,11 +129,12 @@ public class CreditServiceImpl implements CreditService {
     public BigDecimal calculateCreditRateByMaritalStatus(ScoringDataDTO scoringDataDTO, BigDecimal interestRate) {
         log.info("CHECKING MARITAL STATUS");
         MaritalStatusType type = scoringDataDTO.getMaritalStatus();
+
         if (type == MaritalStatusType.MARRIED) {
-            interestRate = interestRate.subtract(BigDecimal.valueOf(3.0));
+            interestRate = interestRate.subtract(marriedDiscount);
         }
-        if (type == MaritalStatusType.DIVORCED) {
-            interestRate = interestRate.add(BigDecimal.valueOf(1.0));
+        else if (type == MaritalStatusType.DIVORCED) {
+            interestRate = interestRate.add(divorcedAdd);
         }
 
         return interestRate;
@@ -97,7 +144,7 @@ public class CreditServiceImpl implements CreditService {
     public BigDecimal calculateCreditRateByDependents(ScoringDataDTO scoringDataDTO, BigDecimal interestRate) {
         log.info("CHECKING DEPENDENTS");
         if (scoringDataDTO.getDependentAmount() > 1) {
-            interestRate = interestRate.add(BigDecimal.valueOf(1.0));
+            interestRate = interestRate.add(dependentsAdd);
         }
 
         return interestRate;
@@ -110,13 +157,13 @@ public class CreditServiceImpl implements CreditService {
         Period age = Period.between(scoringDataDTO.getBirthdate(), currentDate);
 
         if (scoringDataDTO.getGender() == GenderType.FEMALE && age.getYears() >= 35 && age.getYears() <= 60) {
-            interestRate = interestRate.subtract(BigDecimal.valueOf(3.0));
+            interestRate = interestRate.subtract(femaleBetween35And60Discount);
         }
         else if (scoringDataDTO.getGender() == GenderType.MALE && age.getYears() >= 30 && age.getYears() <= 55) {
-            interestRate = interestRate.subtract(BigDecimal.valueOf(3.0));
+            interestRate = interestRate.subtract(maleBetween30And55Discount);
         }
         else if (scoringDataDTO.getGender() == GenderType.NON_BINARY) {
-            interestRate = interestRate.add(BigDecimal.valueOf(3.0));
+            interestRate = interestRate.add(nonBinaryAdd);
         }
 
         return interestRate;
@@ -129,23 +176,24 @@ public class CreditServiceImpl implements CreditService {
         if (scoringDataDTO.getEmployment().getEmploymentStatus() == EmploymentStatusType.UNEMPLOYED) {
             exceptions.add(new ScoringDataException("Unemployed status"));
         }
+
         if (scoringDataDTO.getAmount().intValue() > scoringDataDTO.getEmployment().getSalary()
-                .multiply(BigDecimal.valueOf(MIN_SALARY_COUNT)).intValue()) {
+                .multiply(BigDecimal.valueOf(minSalaryCount)).intValue()) {
             exceptions.add(new ScoringDataException("The salary is too low"));
         }
 
         LocalDate currentDate = LocalDate.now();
         Period agePeriod = Period.between(scoringDataDTO.getBirthdate(), currentDate);
 
-        if (agePeriod.getYears() < MIN_CREDIT_AGE || agePeriod.getYears() > MAX_CREDIT_AGE) {
+        if (agePeriod.getYears() < minCreditAge || agePeriod.getYears() > maxCreditAge) {
             exceptions.add(new ScoringDataException("The age is not appropriate"));
         }
 
-        if (scoringDataDTO.getEmployment().getWorkExperienceCurrent() < MIN_CURRENT_WORK_EXPERIENCE) {
+        if (scoringDataDTO.getEmployment().getWorkExperienceCurrent() < minCurrentWorkExperience) {
             exceptions.add(new ScoringDataException("The current work experience is small"));
         }
 
-        if (scoringDataDTO.getEmployment().getWorkExperienceTotal() < MIN_TOTAL_WORK_EXPERIENCE) {
+        if (scoringDataDTO.getEmployment().getWorkExperienceTotal() < minTotalWorkExperience) {
             exceptions.add(new ScoringDataException("The total work experience is small"));
         }
 
@@ -157,27 +205,24 @@ public class CreditServiceImpl implements CreditService {
     @Override
     public BigDecimal calculatePSK(ScoringDataDTO scoringData, BigDecimal interestRate) {
         log.info("CALCULATING PSK");
-        BigDecimal psk = calculateMonthlyPayment(scoringData, interestRate)
-                .multiply(BigDecimal.valueOf(scoringData.getTerm()));
-
-        return psk;
+        return calculateMonthlyPayment(scoringData, interestRate)
+                .multiply(BigDecimal.valueOf(scoringData.getTerm())).setScale(scale, roundingMode);
     }
 
     @Override
     public BigDecimal calculateMonthlyPayment(ScoringDataDTO scoringData, BigDecimal interestRate) {
         log.info("CALCULATING MONTHLY PAYMENT");
-        BigDecimal monthlyRate = interestRate.divide(BigDecimal.valueOf(ANNUAL_PERIOD), 4, RoundingMode.HALF_UP).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_DOWN);
+        BigDecimal monthlyRate = interestRate.divide(BigDecimal.valueOf(annualPeriod), 4, roundingMode).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
 
         BigDecimal annualCoeff = monthlyRate.multiply(
                         (monthlyRate.add(BigDecimal.ONE)).pow(scoringData.getTerm())
                         .divide(
                                 (monthlyRate.add(BigDecimal.ONE).pow(scoringData.getTerm()))
                                 .subtract(BigDecimal.ONE)
-                        , 4, RoundingMode.HALF_EVEN)
+                        , 4, roundingMode)
         );
-        BigDecimal monthlyPayment = scoringData.getAmount().multiply(annualCoeff);
 
-        return monthlyPayment;
+        return scoringData.getAmount().multiply(annualCoeff).setScale(scale, roundingMode);
     }
 
     private List<PaymentScheduleElement> generatePaymentSchedule(ScoringDataDTO scoringData, BigDecimal monthlyPayment,
@@ -191,9 +236,9 @@ public class CreditServiceImpl implements CreditService {
         for (int month = 1; month <= scoringData.getTerm(); month++) {
 
             dateOfPayment = currentDate.plusMonths(month);
-            BigDecimal interestPayment = remainingPayment.multiply(monthlyRate);
-            BigDecimal debtPayment = monthlyPayment.subtract(interestPayment);
-            remainingPayment = remainingPayment.subtract(debtPayment);
+            BigDecimal interestPayment = remainingPayment.multiply(monthlyRate).setScale(scale, roundingMode);
+            BigDecimal debtPayment = monthlyPayment.subtract(interestPayment).setScale(scale, roundingMode);
+            remainingPayment = remainingPayment.subtract(debtPayment).setScale(scale, roundingMode);
 
             PaymentScheduleElement element = PaymentScheduleElement.builder()
                     .number(month)
@@ -208,6 +253,4 @@ public class CreditServiceImpl implements CreditService {
         }
         return schedule;
     }
-
-
 }

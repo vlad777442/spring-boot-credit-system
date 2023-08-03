@@ -1,156 +1,164 @@
 package com.neoflex.conveyor.service;
 
-import com.neoflex.conveyor.dto.CreditDTO;
-import com.neoflex.conveyor.dto.EmploymentDTO;
-import com.neoflex.conveyor.dto.PaymentScheduleElement;
-import com.neoflex.conveyor.dto.ScoringDataDTO;
-import com.neoflex.conveyor.dto.enumType.EmploymentStatusType;
-import com.neoflex.conveyor.dto.enumType.GenderType;
-import com.neoflex.conveyor.dto.enumType.MaritalStatusType;
-import com.neoflex.conveyor.dto.enumType.PositionType;
+import com.neoflex.conveyor.dto.api.response.CreditDTO;
+import com.neoflex.conveyor.dto.api.request.EmploymentDTO;
+import com.neoflex.conveyor.dto.api.request.ScoringDataDTO;
+import com.neoflex.conveyor.dto.enums.EmploymentStatusType;
+import com.neoflex.conveyor.dto.enums.GenderType;
+import com.neoflex.conveyor.dto.enums.MaritalStatusType;
+import com.neoflex.conveyor.dto.enums.PositionType;
+import com.neoflex.conveyor.service.impl.CreditServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
+@SpringBootTest
 class CreditServiceImplTest {
-    @InjectMocks
-    private CreditServiceImpl creditService = new CreditServiceImpl();
+    @Autowired
+    private CreditServiceImpl creditService;
 
-    @BeforeEach
-    void setUp() {
+    private EmploymentDTO getEmploymentDTO() {
+        return EmploymentDTO.builder()
+                .employmentStatus(EmploymentStatusType.BUSINESS_OWNER)
+                .employerINN("12345678910")
+                .salary(BigDecimal.valueOf(10000000))
+                .position(PositionType.SENIOR)
+                .workExperienceTotal(36)
+                .workExperienceCurrent(12)
+                .build();
     }
-    private EmploymentDTO employmentDTO = EmploymentDTO.builder()
-            .employmentStatus(EmploymentStatusType.BUSINESS_OWNER)
-            .employerINN("12345678910")
-            .salary(BigDecimal.valueOf(10000000))
-            .position(PositionType.SENIOR)
-            .workExperienceTotal(36)
-            .workExperienceCurrent(12)
-            .build();
+
+    private ScoringDataDTO getScoringDataDTO() {
+        return ScoringDataDTO.builder()
+                .amount(BigDecimal.valueOf(200000))
+                .term(24)
+                .firstName("Hugh")
+                .lastName("Jackman")
+                .middleName("Michael")
+                .gender(GenderType.FEMALE)
+                .birthdate(LocalDate.of(1968, 10, 12))
+                .passportSeries("1234")
+                .passportNumber("123456")
+                .passportIssueBranch("EXAMPLE")
+                .maritalStatus(MaritalStatusType.MARRIED)
+                .dependentAmount(2)
+                .employment(getEmploymentDTO())
+                .account("548945")
+                .isInsuranceEnabled(false)
+                .isSalaryClient(false)
+                .build();
+    }
+
+//    @BeforeEach
+//    public void setUp() {
+//        ReflectionTestUtils.setField();
+//    }
 
     @Test
     void calculateCreditDetails() {
         CreditDTO creditDTO = CreditDTO.builder()
                 .amount(BigDecimal.valueOf(200000))
                 .term(24)
-                .rate(BigDecimal.valueOf(7.0))
-                .psk(BigDecimal.valueOf(207057.6))
-                .monthlyPayment(BigDecimal.valueOf(8777.832).setScale(8))
+                .rate(BigDecimal.valueOf(9.0))
+                .psk(BigDecimal.valueOf(210667.92))
+                .monthlyPayment(BigDecimal.valueOf(8777.83))
                 .isInsuranceEnabled(false)
                 .isSalaryClient(false)
                 .build();
 
-        ScoringDataDTO scoringData = mock(ScoringDataDTO.class);
-        when(scoringData.getAmount()).thenReturn(BigDecimal.valueOf(200000));
-        when(scoringData.getTerm()).thenReturn(24);
-        when(scoringData.getEmployment()).thenReturn(employmentDTO);
-        when(scoringData.getGender()).thenReturn(GenderType.MALE);
-        when(scoringData.getBirthdate()).thenReturn(LocalDate.of(1968, 10, 12));
-        when(scoringData.getMaritalStatus()).thenReturn(MaritalStatusType.MARRIED);
-        when(scoringData.getDependentAmount()).thenReturn(2);
+        CreditDTO actual = creditService.calculateCreditDetails(getScoringDataDTO());
 
-        CreditDTO actual = creditService.calculateCreditDetails(scoringData);
-
-        assertEquals(creditDTO.getAmount(), actual.getAmount());
-        assertEquals(creditDTO.getMonthlyPayment(), actual.getMonthlyPayment());
+        assertAll(
+                () -> assertEquals(creditDTO.getAmount(), actual.getAmount()),
+                () -> assertEquals(creditDTO.getPsk(), actual.getPsk()),
+                () -> assertEquals(creditDTO.getMonthlyPayment(), actual.getMonthlyPayment())
+        );
     }
 
     @Test
     void calculateInterestRate() {
-        ScoringDataDTO scoringData = mock(ScoringDataDTO.class);
-        when(scoringData.getAmount()).thenReturn(BigDecimal.valueOf(200000));
-        when(scoringData.getTerm()).thenReturn(24);
-        when(scoringData.getEmployment()).thenReturn(employmentDTO);
-        when(scoringData.getGender()).thenReturn(GenderType.MALE);
-        when(scoringData.getBirthdate()).thenReturn(LocalDate.of(1968, 10, 12));
-        when(scoringData.getMaritalStatus()).thenReturn(MaritalStatusType.MARRIED);
-        when(scoringData.getDependentAmount()).thenReturn(2);
-
-        BigDecimal rate = creditService.calculateInterestRate(scoringData);
+        BigDecimal rate = creditService.calculateInterestRate(getScoringDataDTO());
         BigDecimal expected = BigDecimal.valueOf(5.0);
-        assertEquals(expected, rate);
+
+        assertAll(
+                () -> assertEquals(expected, rate)
+        );
     }
 
     @Test
     void calculateCreditRateByPosition() {
-        ScoringDataDTO scoringData = mock(ScoringDataDTO.class);
-        when(scoringData.getEmployment()).thenReturn(employmentDTO);
-        BigDecimal rate = creditService.calculateCreditRateByPosition(scoringData, BigDecimal.valueOf(10.0));
+        BigDecimal rate = creditService.calculateCreditRateByPosition(getScoringDataDTO(), BigDecimal.valueOf(10.0));
         BigDecimal expected = BigDecimal.valueOf(6.0);
-        assertEquals(expected, rate);
+
+        assertAll(
+                () -> assertEquals(expected, rate)
+        );
     }
 
     @Test
     void calculateCreditRateByMaritalStatus() {
-        ScoringDataDTO scoringData = mock(ScoringDataDTO.class);
-        when(scoringData.getMaritalStatus()).thenReturn(MaritalStatusType.MARRIED);
-        BigDecimal rate = creditService.calculateCreditRateByMaritalStatus(scoringData, BigDecimal.valueOf(10.0));
+        BigDecimal rate = creditService.calculateCreditRateByMaritalStatus(getScoringDataDTO(), BigDecimal.valueOf(10.0));
         BigDecimal expected = BigDecimal.valueOf(7.0);
-        assertEquals(expected, rate);
+
+        assertAll(
+                () ->  assertEquals(expected, rate)
+        );
     }
 
     @Test
     void calculateCreditRateByDependents() {
-        ScoringDataDTO scoringData = mock(ScoringDataDTO.class);
-        when(scoringData.getDependentAmount()).thenReturn(2);
-        BigDecimal rate = creditService.calculateCreditRateByDependents(scoringData, BigDecimal.valueOf(10.0));
+        BigDecimal rate = creditService.calculateCreditRateByDependents(getScoringDataDTO(), BigDecimal.valueOf(10.0));
         BigDecimal expected = BigDecimal.valueOf(11.0);
-        assertEquals(expected, rate);
+
+        assertAll(
+                () ->  assertEquals(expected, rate)
+        );
     }
 
     @Test
     void calculateCreditRateByAge() {
-        ScoringDataDTO scoringData = mock(ScoringDataDTO.class);
-        when(scoringData.getBirthdate()).thenReturn(LocalDate.of(1968, 10, 12));
-        BigDecimal rate = creditService.calculateCreditRateByAge(scoringData, BigDecimal.valueOf(10.0));
-        BigDecimal expected = BigDecimal.valueOf(10.0);
-        assertEquals(expected, rate);
+        BigDecimal rate = creditService.calculateCreditRateByAge(getScoringDataDTO(), BigDecimal.valueOf(10.0));
+        BigDecimal expected = BigDecimal.valueOf(7.0);
+
+        assertAll(
+                () ->  assertEquals(expected, rate)
+        );
     }
 
     @Test
     void calculatePSK() {
-        ScoringDataDTO scoringData = mock(ScoringDataDTO.class);
-        when(scoringData.getAmount()).thenReturn(BigDecimal.valueOf(200000));
-        when(scoringData.getTerm()).thenReturn(24);
-        BigDecimal psk = creditService.calculatePSK(scoringData, BigDecimal.valueOf(7.0));
-        BigDecimal expected = BigDecimal.valueOf(214821.792);
-        assertEquals(expected.setScale(8), psk);
+        BigDecimal psk = creditService.calculatePSK(getScoringDataDTO(), BigDecimal.valueOf(7.0));
+        BigDecimal expected = BigDecimal.valueOf(214821.84);
+
+        assertAll(
+                () ->  assertEquals(expected, psk)
+        );
     }
 
     @Test
     void calculateMonthlyPayment() {
-        ScoringDataDTO scoringData = mock(ScoringDataDTO.class);
-        when(scoringData.getAmount()).thenReturn(BigDecimal.valueOf(200000));
-        when(scoringData.getTerm()).thenReturn(24);
-        BigDecimal rate = creditService.calculateMonthlyPayment(scoringData, BigDecimal.valueOf(10.0));
-        BigDecimal expected = BigDecimal.valueOf(9225.284);
-        assertEquals(expected.setScale(8), rate);
-    }
+        BigDecimal rate = creditService.calculateMonthlyPayment(getScoringDataDTO(), BigDecimal.valueOf(10.0));
+        BigDecimal expected = BigDecimal.valueOf(9225.28);
 
-//    private ScoringDataDTO scoringDataDTO = ScoringDataDTO.builder()
-//            .amount(BigDecimal.valueOf(200000))
-//            .term(24)
-//            .firstName("Hugh")
-//            .lastName("Jackman")
-//            .middleName("Michael")
-//            .gender(GenderType.FEMALE)
-//            .birthdate(LocalDate.of(1968, 10, 12))
-//            .passportSeries("1234")
-//            .passportNumber("123456")
-//            .passportIssueBranch("EXAMPLE")
-//            .maritalStatus(MaritalStatusType.MARRIED)
-//            .dependentAmount(2)
-//            .employment(employmentDTO)
-//            .account("548945")
-//            .isInsuranceEnabled(false)
-//            .isSalaryClient(false)
-//            .build();
+        assertAll(
+                () ->  assertEquals(expected, rate)
+        );
+    }
 }

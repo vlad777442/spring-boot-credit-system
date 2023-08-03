@@ -1,2 +1,31 @@
-{
-    }
+loan:
+  service:
+    base-interest-rate: 12.0
+    min-loan-age: 18
+    annual-period: 12
+    scale: 2
+    rounding-mode: HALF_UP
+    salary-client-discount: 2.0
+    non-salary-client-add: 2.0
+    insurance-client-discount: 1.0
+    non-insurance-client-add: 1.0
+
+credit:
+  service:
+    BASE_INTEREST_RATE: 14.0
+    ANNUAL_PERIOD: 12
+    MIN_SALARY_COUNT: 20
+    MIN_CREDIT_AGE: 20
+    MAX_CREDIT_AGE: 60
+    MIN_TOTAL_WORK_EXPERIENCE: 12
+    MIN_CURRENT_WORK_EXPERIENCE: 3
+    scale: 2
+    roundingMode: HALF_UP
+    middlePositionDiscount: 2.0
+    seniorPositionDiscount: 4.0
+    marriedDiscount: 3.0
+    divorcedAdd: 1.0
+    dependentsAdd: 1.0
+    femaleBetween35And60Discount: 3.0
+    maleBetween30And55Discount: 3.0
+    nonBinaryAdd: 3.0
