@@ -1,13 +1,15 @@
 package com.neoflex.conveyor.service;
 
+import com.neoflex.conveyor.config.properties.LoanProperties;
 import com.neoflex.conveyor.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.conveyor.dto.api.response.LoanOfferDTO;
 import com.neoflex.conveyor.service.impl.LoanServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -17,13 +19,30 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest
+
 class LoanServiceImplTest {
-    @Autowired
+    @Mock
+    private LoanProperties loanProperties;
+    @InjectMocks
     private LoanServiceImpl loanService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(loanProperties.getBaseInterestRate()).thenReturn(BigDecimal.valueOf(12.0));
+        lenient().when(loanProperties.getMinLoanAge()).thenReturn(18);
+        lenient().when(loanProperties.getAnnualPeriod()).thenReturn(12);
+        lenient().when(loanProperties.getScale()).thenReturn(2);
+        lenient().when(loanProperties.getRoundingMode()).thenReturn(RoundingMode.HALF_UP);
+        lenient().when(loanProperties.getSalaryClientDiscount()).thenReturn(BigDecimal.valueOf(2.0));
+        lenient().when(loanProperties.getNonSalaryClientAdd()).thenReturn(BigDecimal.valueOf(2.0));
+        lenient().when(loanProperties.getInsuranceClientDiscount()).thenReturn(BigDecimal.valueOf(1.0));
+        lenient().when(loanProperties.getNonInsuranceClientAdd()).thenReturn(BigDecimal.valueOf(1.0));
+    }
 
     private LoanApplicationRequestDTO getLoanApplicationRequestDTO() {
         return LoanApplicationRequestDTO.builder()

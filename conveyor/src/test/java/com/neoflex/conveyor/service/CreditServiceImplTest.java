@@ -1,29 +1,56 @@
 package com.neoflex.conveyor.service;
 
-import com.neoflex.conveyor.dto.api.response.CreditDTO;
+import com.neoflex.conveyor.config.properties.CreditProperties;
 import com.neoflex.conveyor.dto.api.request.EmploymentDTO;
 import com.neoflex.conveyor.dto.api.request.ScoringDataDTO;
+import com.neoflex.conveyor.dto.api.response.CreditDTO;
 import com.neoflex.conveyor.dto.enums.EmploymentStatusType;
 import com.neoflex.conveyor.dto.enums.GenderType;
 import com.neoflex.conveyor.dto.enums.MaritalStatusType;
 import com.neoflex.conveyor.dto.enums.PositionType;
 import com.neoflex.conveyor.service.impl.CreditServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest
 class CreditServiceImplTest {
-    @Autowired
+    @Mock
+    private CreditProperties creditProperties;
+    @InjectMocks
     private CreditServiceImpl creditService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(creditProperties.getBaseInterestRate()).thenReturn(BigDecimal.valueOf(12.0));
+        lenient().when(creditProperties.getAnnualPeriod()).thenReturn(12);
+        lenient().when(creditProperties.getMinSalaryCount()).thenReturn(20);
+        lenient().when(creditProperties.getMinCreditAge()).thenReturn(20);
+        lenient().when(creditProperties.getMaxCreditAge()).thenReturn(60);
+        lenient().when(creditProperties.getMinTotalWorkExperience()).thenReturn(12);
+        lenient().when(creditProperties.getMinCurrentWorkExperience()).thenReturn(3);
+        lenient().when(creditProperties.getScale()).thenReturn(2);
+        lenient().when(creditProperties.getRoundingMode()).thenReturn(RoundingMode.HALF_UP);
+        lenient().when(creditProperties.getMiddlePositionDiscount()).thenReturn(BigDecimal.valueOf(2.0));
+        lenient().when(creditProperties.getSeniorPositionDiscount()).thenReturn(BigDecimal.valueOf(4.0));
+        lenient().when(creditProperties.getMarriedDiscount()).thenReturn(BigDecimal.valueOf(3.0));
+        lenient().when(creditProperties.getDivorcedAdd()).thenReturn(BigDecimal.valueOf(1.0));
+        lenient().when(creditProperties.getDependentsAdd()).thenReturn(BigDecimal.valueOf(1.0));
+        lenient().when(creditProperties.getFemaleBetween35And60Discount()).thenReturn(BigDecimal.valueOf(3.0));
+        lenient().when(creditProperties.getMaleBetween30And55Discount()).thenReturn(BigDecimal.valueOf(3.0));
+        lenient().when(creditProperties.getNonBinaryAdd()).thenReturn(BigDecimal.valueOf(3.0));
+    }
 
     private EmploymentDTO getEmploymentDTO() {
         return EmploymentDTO.builder()
@@ -57,19 +84,14 @@ class CreditServiceImplTest {
                 .build();
     }
 
-//    @BeforeEach
-//    public void setUp() {
-//        ReflectionTestUtils.setField();
-//    }
-
     @Test
     void calculateCreditDetails() {
         CreditDTO creditDTO = CreditDTO.builder()
                 .amount(BigDecimal.valueOf(200000))
                 .term(24)
                 .rate(BigDecimal.valueOf(9.0))
-                .psk(BigDecimal.valueOf(210667.92))
-                .monthlyPayment(BigDecimal.valueOf(8777.83))
+                .psk(BigDecimal.valueOf(206310.0).setScale(creditProperties.getScale()))
+                .monthlyPayment(BigDecimal.valueOf(8596.25))
                 .isInsuranceEnabled(false)
                 .isSalaryClient(false)
                 .build();
@@ -86,7 +108,7 @@ class CreditServiceImplTest {
     @Test
     void calculateInterestRate() {
         BigDecimal rate = creditService.calculateInterestRate(getScoringDataDTO());
-        BigDecimal expected = BigDecimal.valueOf(5.0);
+        BigDecimal expected = BigDecimal.valueOf(3.0);
 
         assertAll(
                 () -> assertEquals(expected, rate)

@@ -1,5 +1,5 @@
-loan:
-  service:
+service:
+  loan:
     base-interest-rate: 12.0
     min-loan-age: 18
     annual-period: 12
@@ -10,8 +10,7 @@ loan:
     insurance-client-discount: 1.0
     non-insurance-client-add: 1.0
 
-credit:
-  service:
+  credit:
     BASE_INTEREST_RATE: 14.0
     ANNUAL_PERIOD: 12
     MIN_SALARY_COUNT: 20
