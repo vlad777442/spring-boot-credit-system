@@ -48,10 +48,10 @@ public class Client {
     private Integer dependentAmount;
 
     @Column(name = "passport_id")
-    private Passport passportId;
+    private Passport passport;
 
     @Column(name = "employment_id")
-    private Employment employmentId;
+    private Employment employment;
 
     @Column(name = "account")
     private String account;

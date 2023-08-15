@@ -1,8 +1,10 @@
 package com.neoflex.deal.model;
 
+import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -14,6 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "application")
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Application {
@@ -38,7 +41,7 @@ public class Application {
 
     @Column(name = "applied_offer")
     @JdbcTypeCode(SqlTypes.JSON)
-    private LocalDateTime appliedOffer;
+    private LoanOfferDTO appliedOffer;
 
     @Column(name = "sign_date")
     private LocalDateTime signDate;

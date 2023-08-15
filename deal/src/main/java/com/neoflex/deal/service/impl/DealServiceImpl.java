@@ -1,0 +1,137 @@
+package com.neoflex.deal.service.impl;
+
+import com.neoflex.deal.dto.api.request.EmploymentDTO;
+import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
+import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
+import com.neoflex.deal.dto.api.request.ScoringDataDTO;
+import com.neoflex.deal.dto.api.response.CreditDTO;
+import com.neoflex.deal.dto.api.response.LoanOfferDTO;
+import com.neoflex.deal.exception.DealException;
+import com.neoflex.deal.model.*;
+import com.neoflex.deal.model.enums.ApplicationStatus;
+import com.neoflex.deal.model.enums.ChangeType;
+import com.neoflex.deal.model.enums.CreditStatus;
+import com.neoflex.deal.repository.ApplicationRepository;
+import com.neoflex.deal.repository.ClientRepository;
+import com.neoflex.deal.service.ApplicationService;
+import com.neoflex.deal.service.ConveyorClient;
+import com.neoflex.deal.service.DealService;
+import com.neoflex.deal.service.mapper.CreditMapper;
+import com.neoflex.deal.service.mapper.EmploymentMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class DealServiceImpl implements DealService {
+    private final ApplicationService applicationService;
+    private ApplicationRepository applicationRepository;
+    private ClientRepository clientRepository;
+    private ConveyorClient conveyorClient;
+    private EmploymentMapper employmentMapper;
+    private CreditMapper creditMapper;
+
+
+    @Override
+    public List<LoanOfferDTO> getLoanOffers(LoanApplicationRequestDTO requestDTO) {
+        log.info("GETTING LOAN OFFERS");
+        Client client =  clientRepository.save(applicationService.createClient(requestDTO));
+        applicationRepository.save(applicationService.createApplication(client));
+
+        return conveyorClient.getLoanOffers(requestDTO);
+    }
+
+    @Override
+    public Application updateApplication(LoanOfferDTO loanOfferDTO) {
+        log.info("UPDATING APPLICATION");
+        Optional<Application> optApplication = applicationRepository.findById(loanOfferDTO.getApplicationId());
+        Application application;
+
+        if (optApplication.isPresent()) {
+            application = optApplication.get();
+        }
+        else {
+            throw new DealException("The application does exist");
+        }
+
+        application.setStatus(ApplicationStatus.APPROVED);
+        application.setAppliedOffer(loanOfferDTO);
+        updateApplicationHistory(application);
+
+        return applicationRepository.save(application);
+    }
+
+    private void updateApplicationHistory(Application application) {
+        log.info("UPDATING APPLICATION HISTORY");
+        List<StatusHistory> historyDTO = application.getStatusHistory();
+
+        StatusHistory statusHistory = StatusHistory.builder()
+                .status(ApplicationStatus.APPROVED)
+                .time(LocalDateTime.now())
+                .changeType(ChangeType.AUTOMATIC)
+                .build();
+
+        historyDTO.add(statusHistory);
+    }
+
+    @Override
+    public CreditDTO calculateCreditByApplicationId(Long applicationId, FinishRegistrationRequestDTO requestDTO) {
+        log.info("CALCULATING CREDIT DETAILS FROM APP ID");
+        Optional<Application> optApplication = applicationRepository.findById(applicationId);
+        Application application;
+
+        if (optApplication.isPresent()) {
+            application = optApplication.get();
+        }
+        else {
+            throw new DealException("The application does not exist");
+        }
+
+        Client client = application.getClient();
+        updateClientByEmployment(requestDTO.getEmployment(), client);
+
+        ScoringDataDTO scoringDataDTO = ScoringDataDTO.builder()
+                .amount(application.getCredit().getAmount())
+                .term(application.getCredit().getTerm())
+                .firstName(client.getFirstName())
+                .lastName(client.getLastName())
+                .middleName(client.getMiddleName())
+                .gender(requestDTO.getGender())
+                .birthdate(client.getBirthDate())
+                .passportSeries(client.getPassport().getSeries())
+                .passportNumber(client.getPassport().getNumber())
+                .passportIssueDate(requestDTO.getPassportIssueDate())
+                .passportIssueBranch(requestDTO.getPassportIssueBrach())
+                .maritalStatus(requestDTO.getMaritalStatus())
+                .dependentAmount(requestDTO.getDependentAmount())
+                .employment(requestDTO.getEmployment())
+                .account(requestDTO.getAccount())
+                .isInsuranceEnabled(application.getCredit().getIsInsuranceEnabled())
+                .isSalaryClient(application.getCredit().getIsSalaryClient())
+                .build();
+
+        CreditDTO creditDTO = conveyorClient.getCalculation(scoringDataDTO);
+        updateCreditByCreditDTO(creditDTO, application);
+
+        return creditDTO;
+    }
+
+    private void updateClientByEmployment(EmploymentDTO employmentDTO, Client client) {
+        Employment employment = employmentMapper.mapEmployment(employmentDTO);
+        client.setEmployment(employment);
+        clientRepository.save(client);
+    }
+
+    private void updateCreditByCreditDTO(CreditDTO creditDTO, Application application) {
+        Credit credit = creditMapper.mapCredit(creditDTO);
+        credit.setCreditStatus(CreditStatus.CALCULATED);
+        application.setCredit(credit);
+        applicationRepository.save(application);
+    }
+}

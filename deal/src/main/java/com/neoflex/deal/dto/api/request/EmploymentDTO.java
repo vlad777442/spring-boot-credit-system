@@ -1,7 +1,7 @@
 package com.neoflex.deal.dto.api.request;
 
-import com.neoflex.deal.dto.enums.EmploymentStatusType;
 import com.neoflex.deal.dto.enums.PositionType;
+import com.neoflex.deal.model.enums.EmploymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @Schema(description = "Employment dto")
 public class EmploymentDTO {
     @Schema(description = "Employment status type", example = "EMPLOYED")
-    private EmploymentStatusType employmentStatus;
+    private EmploymentStatus employmentStatus;
 
     @Schema(description = "Employer's INN", example = "1234567890")
     private String employerINN;
