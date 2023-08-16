@@ -4,6 +4,7 @@ import com.neoflex.deal.dto.api.response.PaymentScheduleElement;
 import com.neoflex.deal.model.enums.CreditStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -17,6 +18,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Credit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

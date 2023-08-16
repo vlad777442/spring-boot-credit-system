@@ -38,7 +38,9 @@ public class DealServiceImpl implements DealService {
 
     @Override
     public Client createClient(LoanApplicationRequestDTO requestDTO) {
-        log.debug("creating client from loanappdto {}", requestDTO);
+        log.info("Creating client");
+        log.debug("creating client from loanAppDto {}", requestDTO);
+
         Passport passport = Passport.builder()
                 .series(requestDTO.getPassportSeries())
                 .number(requestDTO.getPassportNumber())
@@ -56,7 +58,9 @@ public class DealServiceImpl implements DealService {
 
     @Override
     public Application createApplication(Client client) {
-        log.debug("creating app {}", client);
+        log.info("Creating application");
+        log.debug("creating app from client {}", client);
+
         ArrayList<StatusHistory> statusHistories = new ArrayList<>();
 
         StatusHistory statusHistory =  StatusHistory.builder()
@@ -77,7 +81,9 @@ public class DealServiceImpl implements DealService {
 
     @Override
     public List<LoanOfferDTO> getLoanOffers(LoanApplicationRequestDTO requestDTO) {
-        log.info("GETTING LOAN OFFERS");
+        log.info("Getting loan offers");
+        log.debug("Getting offers from request {}", requestDTO);
+
         Client client =  clientRepository.save(createClient(requestDTO));
         applicationRepository.save(createApplication(client));
 
@@ -87,6 +93,8 @@ public class DealServiceImpl implements DealService {
     @Override
     public Application updateApplication(LoanOfferDTO loanOfferDTO) {
         log.info("UPDATING APPLICATION");
+        log.debug("Updating application from loan offer {}", loanOfferDTO);
+
         Optional<Application> optApplication = applicationRepository.findById(loanOfferDTO.getApplicationId());
         Application application;
 
@@ -94,18 +102,21 @@ public class DealServiceImpl implements DealService {
             application = optApplication.get();
         }
         else {
-            throw new DealException("The application does exist");
+            throw new DealException("The application does not exist");
         }
 
         application.setStatus(ApplicationStatus.APPROVED);
         application.setAppliedOffer(loanOfferDTO);
         updateApplicationHistory(application);
+        applicationRepository.save(application);
 
-        return applicationRepository.save(application);
+        return application;
     }
 
     private void updateApplicationHistory(Application application) {
-        log.info("UPDATING APPLICATION HISTORY");
+        log.info("Updating application history");
+        log.debug("Updating application history {}", application);
+
         List<StatusHistory> historyDTO = application.getStatusHistory();
 
         StatusHistory statusHistory = StatusHistory.builder()
@@ -120,6 +131,8 @@ public class DealServiceImpl implements DealService {
     @Override
     public CreditDTO calculateCreditByApplicationId(Long applicationId, FinishRegistrationRequestDTO requestDTO) {
         log.info("CALCULATING CREDIT DETAILS FROM APP ID");
+        log.debug("Calculating credit from request {} {}", applicationId, requestDTO);
+
         Optional<Application> optApplication = applicationRepository.findById(applicationId);
         Application application;
 
@@ -160,12 +173,18 @@ public class DealServiceImpl implements DealService {
     }
 
     private void updateClientByEmployment(EmploymentDTO employmentDTO, Client client) {
+        log.info("Updating client by employmentDTO");
+        log.debug("Request {} {}", employmentDTO, client);
+
         Employment employment = employmentMapper.mapEmployment(employmentDTO);
         client.setEmployment(employment);
         clientRepository.save(client);
     }
 
     private void updateCreditByCreditDTO(CreditDTO creditDTO, Application application) {
+        log.info("Updating credit from CreditDTO");
+        log.debug("Updating credit by CreditDTO {} {}", creditDTO, application);
+
         Credit credit = creditMapper.mapCredit(creditDTO);
         credit.setCreditStatus(CreditStatus.CALCULATED);
         application.setCredit(credit);
