@@ -13,7 +13,6 @@ import com.neoflex.deal.model.enums.ChangeType;
 import com.neoflex.deal.model.enums.CreditStatus;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.ClientRepository;
-import com.neoflex.deal.service.ApplicationService;
 import com.neoflex.deal.service.ConveyorClient;
 import com.neoflex.deal.service.DealService;
 import com.neoflex.deal.service.mapper.CreditMapper;
@@ -23,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,19 +30,56 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class DealServiceImpl implements DealService {
-    private final ApplicationService applicationService;
     private ApplicationRepository applicationRepository;
     private ClientRepository clientRepository;
     private ConveyorClient conveyorClient;
     private EmploymentMapper employmentMapper;
     private CreditMapper creditMapper;
 
+    @Override
+    public Client createClient(LoanApplicationRequestDTO requestDTO) {
+        log.debug("creating client from loanappdto {}", requestDTO);
+        Passport passport = Passport.builder()
+                .series(requestDTO.getPassportSeries())
+                .number(requestDTO.getPassportNumber())
+                .build();
+
+        return Client.builder()
+                .lastName(requestDTO.getLastName())
+                .firstName(requestDTO.getFirstName())
+                .middleName(requestDTO.getMiddleName())
+                .birthDate(requestDTO.getBirthdate())
+                .email(requestDTO.getEmail())
+                .passport(passport)
+                .build();
+    }
+
+    @Override
+    public Application createApplication(Client client) {
+        log.debug("creating app {}", client);
+        ArrayList<StatusHistory> statusHistories = new ArrayList<>();
+
+        StatusHistory statusHistory =  StatusHistory.builder()
+                .status(ApplicationStatus.PREAPPROVAL)
+                .time(LocalDateTime.now())
+                .changeType(ChangeType.AUTOMATIC)
+                .build();
+
+        statusHistories.add(statusHistory);
+
+        return Application.builder()
+                .client(client)
+                .creationDate(LocalDateTime.now())
+                .status(ApplicationStatus.PREAPPROVAL)
+                .statusHistory(statusHistories)
+                .build();
+    }
 
     @Override
     public List<LoanOfferDTO> getLoanOffers(LoanApplicationRequestDTO requestDTO) {
         log.info("GETTING LOAN OFFERS");
-        Client client =  clientRepository.save(applicationService.createClient(requestDTO));
-        applicationRepository.save(applicationService.createApplication(client));
+        Client client =  clientRepository.save(createClient(requestDTO));
+        applicationRepository.save(createApplication(client));
 
         return conveyorClient.getLoanOffers(requestDTO);
     }
