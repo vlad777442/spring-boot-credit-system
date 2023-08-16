@@ -1,5 +1,6 @@
 package com.neoflex.deal.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.neoflex.deal.dto.api.response.PaymentScheduleElement;
 import com.neoflex.deal.model.enums.CreditStatus;
 import jakarta.persistence.*;
@@ -19,6 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Credit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,5 +1,6 @@
 package com.neoflex.deal.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import jakarta.persistence.*;
@@ -19,6 +20,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Application {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

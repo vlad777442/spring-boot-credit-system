@@ -22,7 +22,7 @@ import java.util.List;
 @Tag(name = "Deal Controller")
 @Slf4j
 public class DealController {
-    private DealService dealService;
+    private final DealService dealService;
 
     @Operation(summary = "Получение списка 4 возможных займов")
     @PostMapping("/application")
@@ -33,7 +33,7 @@ public class DealController {
         return dealService.getLoanOffers(requestDTO);
     }
 
-    @Operation(summary = "Выбор предложение и обновление заявки на кредит")
+    @Operation(summary = "Выбор предложения и обновление заявки на кредит")
     @PutMapping("/offer")
     public Application updateApplication(@RequestBody LoanOfferDTO loanOfferDTO) {
         log.info("CONTROLLER: update application");

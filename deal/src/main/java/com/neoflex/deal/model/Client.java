@@ -1,5 +1,6 @@
 package com.neoflex.deal.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.neoflex.deal.model.enums.Gender;
 import com.neoflex.deal.model.enums.MaritalStatus;
 import jakarta.persistence.*;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -30,11 +30,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class DealServiceImpl implements DealService {
-    private ApplicationRepository applicationRepository;
-    private ClientRepository clientRepository;
-    private ConveyorClient conveyorClient;
-    private EmploymentMapper employmentMapper;
-    private CreditMapper creditMapper;
+    private final ApplicationRepository applicationRepository;
+    private final ClientRepository clientRepository;
+    private final ConveyorClient conveyorClient;
+    private final EmploymentMapper employmentMapper;
+    private final CreditMapper creditMapper;
 
     @Override
     public Client createClient(LoanApplicationRequestDTO requestDTO) {
