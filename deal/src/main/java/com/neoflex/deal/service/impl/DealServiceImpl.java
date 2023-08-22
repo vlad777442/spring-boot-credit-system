@@ -5,17 +5,21 @@ import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.request.ScoringDataDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
+import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.exception.DealException;
+import com.neoflex.deal.mapper.LoanOfferMapper;
+import com.neoflex.deal.mapper.ScoringDataMapper;
 import com.neoflex.deal.model.*;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import com.neoflex.deal.model.enums.ChangeType;
 import com.neoflex.deal.model.enums.CreditStatus;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.ClientRepository;
-import com.neoflex.deal.service.ConveyorClient;
+import com.neoflex.deal.client.ConveyorClient;
 import com.neoflex.deal.service.DealService;
-import com.neoflex.deal.service.mapper.CreditMapper;
-import com.neoflex.deal.service.mapper.EmploymentMapper;
+import com.neoflex.deal.mapper.CreditMapper;
+import com.neoflex.deal.mapper.EmploymentMapper;
+import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +28,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +38,8 @@ public class DealServiceImpl implements DealService {
     private final ConveyorClient conveyorClient;
     private final EmploymentMapper employmentMapper;
     private final CreditMapper creditMapper;
+    private final LoanOfferMapper loanOfferMapper;
+    private final ScoringDataMapper scoringDataMapper;
 
     private Client createClient(LoanApplicationRequestDTO requestDTO) {
         log.info("Creating client");
@@ -75,23 +80,31 @@ public class DealServiceImpl implements DealService {
 
     @Override
     @Transactional
-    public List<LoanOffer> application(LoanApplicationRequestDTO requestDTO) {
+    public List<LoanOfferDTO> application(LoanApplicationRequestDTO requestDTO) {
         log.info("Getting loan offers");
         log.debug("Getting offers from request {}", requestDTO);
 
         Client client =  clientRepository.save(createClient(requestDTO));
         Application application = createApplication(client);
-        applicationRepository.save(application);
+        Application savedApplication = applicationRepository.save(application);
 
-        List<LoanOffer> offers = conveyorClient.getLoanOffers(requestDTO);
-        AtomicLong counter = new AtomicLong(1L);
-        offers.forEach(offer -> offer.setApplicationId(counter.getAndIncrement()));
+        List<LoanOffer> offers = retrieveLoanOffersFromConveyor(requestDTO);
+        offers.forEach(offer -> offer.setApplicationId(savedApplication.getApplicationId()));
 
-        return offers;
+        return loanOfferMapper.mapToListLoanOfferDTO(offers);
+    }
+
+    private List<LoanOffer> retrieveLoanOffersFromConveyor(LoanApplicationRequestDTO requestDTO) {
+        try {
+            return conveyorClient.getLoanOffers(requestDTO);
+        } catch (FeignException ex) {
+            log.error("Error while retrieving loan offers from conveyor: {}", ex.getMessage());
+            throw new DealException(ex.getMessage());
+        }
     }
 
     @Override
-    public Application updateApplication(LoanOffer loanOffer) {
+    public Application updateApplication(LoanOfferDTO loanOffer) {
         log.info("UPDATING APPLICATION");
         log.debug("Updating application from loan offer {}", loanOffer);
 
@@ -99,10 +112,12 @@ public class DealServiceImpl implements DealService {
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
 
         application.setStatus(ApplicationStatus.APPROVED);
-        application.setAppliedOffer(loanOffer);
+        application.setAppliedOffer(loanOfferMapper.mapToLoanOffer(loanOffer));
 
         List<StatusHistory> histories = application.getStatusHistory();
-        histories.add(updateApplicationHistory(ApplicationStatus.APPROVED, ChangeType.AUTOMATIC));
+
+        log.info("Building application history");
+        histories.add(buildApplicationHistory(ApplicationStatus.APPROVED, ChangeType.AUTOMATIC));
         application.setStatusHistory(histories);
 
         applicationRepository.save(application);
@@ -111,10 +126,7 @@ public class DealServiceImpl implements DealService {
         return application;
     }
 
-    private StatusHistory updateApplicationHistory(ApplicationStatus status, ChangeType type) {
-        log.info("Updating application history");
-        log.debug("Updating application history {} {}", status, type);
-
+    private StatusHistory buildApplicationHistory(ApplicationStatus status, ChangeType type) {
         return StatusHistory.builder()
                 .status(status)
                 .time(LocalDateTime.now())
@@ -134,22 +146,7 @@ public class DealServiceImpl implements DealService {
         Client client = application.getClient();
         updateClientByEmployment(requestDTO.getEmployment(), client);
 
-        ScoringDataDTO scoringDataDTO = ScoringDataDTO.builder()
-                .firstName(client.getFirstName())
-                .lastName(client.getLastName())
-                .middleName(client.getMiddleName())
-                .gender(requestDTO.getGender())
-                .birthdate(client.getBirthDate())
-                .passportSeries(client.getPassport().getSeries())
-                .passportNumber(client.getPassport().getNumber())
-                .passportIssueDate(requestDTO.getPassportIssueDate())
-                .passportIssueBranch(requestDTO.getPassportIssueBrach())
-                .maritalStatus(requestDTO.getMaritalStatus())
-                .dependentAmount(requestDTO.getDependentAmount())
-                .employment(requestDTO.getEmployment())
-                .account(requestDTO.getAccount())
-                .build();
-
+        ScoringDataDTO scoringDataDTO = scoringDataMapper.mapToScoringDataDTO(application, client, requestDTO);
         CreditDTO creditDTO = conveyorClient.getCalculation(scoringDataDTO);
         updateCreditByCreditDTO(creditDTO, application);
 

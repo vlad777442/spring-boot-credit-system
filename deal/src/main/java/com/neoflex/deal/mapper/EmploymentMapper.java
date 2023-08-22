@@ -1,4 +1,4 @@
-package com.neoflex.deal.service.mapper;
+package com.neoflex.deal.mapper;
 
 import com.neoflex.deal.dto.api.request.EmploymentDTO;
 import com.neoflex.deal.model.Employment;

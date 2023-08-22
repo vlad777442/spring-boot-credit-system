@@ -3,8 +3,8 @@ package com.neoflex.deal.controller;
 import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
+import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.model.Application;
-import com.neoflex.deal.model.LoanOffer;
 import com.neoflex.deal.service.DealService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +24,7 @@ public class DealController {
 
     @Operation(summary = "Получение списка 4 возможных займов")
     @PostMapping("/application")
-    public List<LoanOffer> application(@RequestBody LoanApplicationRequestDTO requestDTO) {
+    public List<LoanOfferDTO> application(@RequestBody LoanApplicationRequestDTO requestDTO) {
         log.info("CONTROLLER: getOffers");
         log.debug("LoanApplicationRequest details: {}", requestDTO);
 
@@ -33,7 +33,7 @@ public class DealController {
 
     @Operation(summary = "Выбор предложения и обновление заявки на кредит")
     @PutMapping("/offer")
-    public Application updateApplication(@RequestBody LoanOffer loanOffer) {
+    public Application updateApplication(@RequestBody LoanOfferDTO loanOffer) {
         log.info("CONTROLLER: update application");
         log.debug("LoanOfferRequest details: {}", loanOffer);
 

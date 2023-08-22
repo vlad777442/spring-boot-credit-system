@@ -1,21 +1,26 @@
 package com.neoflex.deal.service;
 
+import com.neoflex.deal.client.ConveyorClient;
+import com.neoflex.deal.dto.api.request.EmploymentDTO;
 import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.request.ScoringDataDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
 import com.neoflex.deal.dto.api.response.LoanOfferDTO;
-import com.neoflex.deal.model.LoanOffer;
 import com.neoflex.deal.dto.enums.GenderType;
 import com.neoflex.deal.dto.enums.MaritalStatusType;
+import com.neoflex.deal.dto.enums.PositionType;
+import com.neoflex.deal.mapper.CreditMapper;
+import com.neoflex.deal.mapper.EmploymentMapper;
+import com.neoflex.deal.mapper.ScoringDataMapper;
+import com.neoflex.deal.mapper.impl.LoanOfferMapperMyImpl;
 import com.neoflex.deal.model.*;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import com.neoflex.deal.model.enums.ChangeType;
+import com.neoflex.deal.model.enums.EmploymentStatus;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.ClientRepository;
 import com.neoflex.deal.service.impl.DealServiceImpl;
-import com.neoflex.deal.service.mapper.CreditMapper;
-import com.neoflex.deal.service.mapper.EmploymentMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -59,6 +64,12 @@ class DealServiceTest {
     @Spy
     private CreditMapper creditMapper;
 
+    @Spy
+    private LoanOfferMapperMyImpl loanOfferMapper;
+
+    @Spy
+    ScoringDataMapper scoringDataMapper;
+
     private LoanApplicationRequestDTO getLoanApplicationRequestDTO() {
         return LoanApplicationRequestDTO.builder()
                 .amount(BigDecimal.valueOf(100000))
@@ -101,6 +112,7 @@ class DealServiceTest {
         statusHistories.add(statusHistory);
 
         return Application.builder()
+                .applicationId(1L)
                 .client(getClient())
                 .credit(getCredit())
                 .creationDate(LocalDateTime.now())
@@ -109,8 +121,8 @@ class DealServiceTest {
                 .build();
     }
 
-    private LoanOffer getLoanOfferDTO() {
-        return LoanOffer.builder()
+    private LoanOfferDTO getLoanOfferDTO() {
+        return LoanOfferDTO.builder()
                 .applicationId(1L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(115000).setScale(2, RoundingMode.HALF_UP))
@@ -153,6 +165,38 @@ class DealServiceTest {
                 .build();
     }
 
+    private EmploymentDTO getEmploymentDTO() {
+        return EmploymentDTO.builder()
+                .employmentStatus(EmploymentStatus.BUSINESS_OWNER)
+                .employerINN("12345678910")
+                .salary(BigDecimal.valueOf(10000000))
+                .position(PositionType.SENIOR)
+                .workExperienceTotal(36)
+                .workExperienceCurrent(12)
+                .build();
+    }
+
+    private ScoringDataDTO getScoringDataDTO() {
+        return ScoringDataDTO.builder()
+                .amount(BigDecimal.valueOf(200000))
+                .term(24)
+                .firstName("Hugh")
+                .lastName("Jackman")
+                .middleName("Michael")
+                .gender(GenderType.FEMALE)
+                .birthdate(LocalDate.of(1968, 10, 12))
+                .passportSeries("1234")
+                .passportNumber("123456")
+                .passportIssueBranch("EXAMPLE")
+                .maritalStatus(MaritalStatusType.MARRIED)
+                .dependentAmount(2)
+                .employment(getEmploymentDTO())
+                .account("548945")
+                .isInsuranceEnabled(false)
+                .isSalaryClient(false)
+                .build();
+    }
+
     @Test
     void getLoanOffers() {
         LoanOffer loanOffer1 = LoanOffer.builder()
@@ -167,7 +211,7 @@ class DealServiceTest {
                 .build();
 
         LoanOffer loanOffer2 = LoanOffer.builder()
-                .applicationId(3L)
+                .applicationId(1L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(112960).setScale(2, RoundingMode.HALF_UP))
                 .term(12)
@@ -178,7 +222,7 @@ class DealServiceTest {
                 .build();
 
         LoanOffer loanOffer3 = LoanOffer.builder()
-                .applicationId(2L)
+                .applicationId(1L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(111040).setScale(2, RoundingMode.HALF_UP))
                 .term(12)
@@ -189,7 +233,7 @@ class DealServiceTest {
                 .build();
 
         LoanOffer loanOffer4 = LoanOffer.builder()
-                .applicationId(4L)
+                .applicationId(1L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(109000).setScale(2, RoundingMode.HALF_UP))
                 .term(12)
@@ -203,10 +247,12 @@ class DealServiceTest {
                 .sorted(Comparator.comparing(LoanOffer::getRate).reversed())
                 .collect(Collectors.toList());
 
+        when(applicationRepository.save(any(Application.class))).thenReturn(getApplication());
         when(conveyorClient.getLoanOffers(getLoanApplicationRequestDTO())).thenReturn(expected);
 
         assertAll(
-                () ->  assertEquals(expected, dealService.application(getLoanApplicationRequestDTO()))
+                () ->  assertEquals(loanOfferMapper.mapToListLoanOfferDTO(expected),
+                        dealService.application(getLoanApplicationRequestDTO()))
         );
     }
 
@@ -218,7 +264,7 @@ class DealServiceTest {
         Application expected = getApplication();
 
         expected.setStatus(ApplicationStatus.APPROVED);
-        expected.setAppliedOffer(getLoanOfferDTO());
+        expected.setAppliedOffer(loanOfferMapper.mapToLoanOffer(getLoanOfferDTO()));
 
         assertAll(
                 () -> assertEquals(expected.getStatus(), actual.getStatus()),
@@ -228,7 +274,9 @@ class DealServiceTest {
 
     @Test
     void calculateCreditByApplicationId() {
-        when(applicationRepository.findById(1L)).thenReturn(Optional.of(getApplication()));
+        Optional<Application> application = Optional.of(getApplication());
+        application.get().setAppliedOffer(loanOfferMapper.mapToLoanOffer(getLoanOfferDTO()));
+        when(applicationRepository.findById(1L)).thenReturn(application);
         when(conveyorClient.getCalculation(any(ScoringDataDTO.class))).thenReturn(getCreditDTO());
         when(creditMapper.mapCredit(any(CreditDTO.class))).thenReturn(getCredit());
 

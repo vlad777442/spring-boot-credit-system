@@ -1,4 +1,4 @@
-package com.neoflex.deal.service;
+package com.neoflex.deal.client;
 
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.request.ScoringDataDTO;

@@ -1,4 +1,4 @@
-package com.neoflex.deal.service.mapper;
+package com.neoflex.deal.mapper;
 
 import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.model.LoanOffer;
@@ -8,7 +8,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface LoanOfferMapper {
-    LoanOffer mapLoanOffer(LoanOfferDTO loanOfferDTO);
-    LoanOfferDTO mapLoanOfferDTO(LoanOffer loanOffer);
-    List<LoanOfferDTO> mapListLoanOfferDTO(List<LoanOffer> loanOffer);
+    LoanOffer mapToLoanOffer(LoanOfferDTO loanOfferDTO);
+    LoanOfferDTO mapToLoanOfferDTO(LoanOffer loanOffer);
+    List<LoanOfferDTO> mapToListLoanOfferDTO(List<LoanOffer> loanOffer);
 }

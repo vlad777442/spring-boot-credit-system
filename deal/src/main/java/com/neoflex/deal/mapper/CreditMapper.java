@@ -1,4 +1,4 @@
-package com.neoflex.deal.service.mapper;
+package com.neoflex.deal.mapper;
 
 import com.neoflex.deal.dto.api.response.CreditDTO;
 import com.neoflex.deal.model.Credit;
