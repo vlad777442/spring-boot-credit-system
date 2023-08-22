@@ -16,7 +16,6 @@ public interface LoanService {
 
     /**
      * This method generates loan offer based on LoanApplicationRequestDTO and other parameters
-     * @param id
      * @param isInsuranceEnabled
      * @param isSalaryClient
      * @param requestDTO
