@@ -4,6 +4,7 @@ import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.request.ScoringDataDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
+import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.model.LoanOffer;
 import com.neoflex.deal.dto.enums.GenderType;
 import com.neoflex.deal.dto.enums.MaritalStatusType;
@@ -151,24 +152,6 @@ class DealServiceTest {
                 .paymentSchedule(new ArrayList<>())
                 .build();
     }
-//    @Test
-//    void createClient() {
-//        Client client = dealService.createClient(getLoanApplicationRequestDTO());
-//
-//        assertAll(
-//                () -> assertEquals(getClient(), client)
-//        );
-//    }
-//
-//    @Test
-//    void createApplication() {
-//        Application application = dealService.createApplication(getClient());
-//
-//        assertAll(
-//                () -> assertEquals(getApplication().getClient(), application.getClient()),
-//                () -> assertEquals(getApplication().getStatus(), application.getStatus())
-//        );
-//    }
 
     @Test
     void getLoanOffers() {

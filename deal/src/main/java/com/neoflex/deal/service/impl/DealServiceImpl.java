@@ -5,7 +5,6 @@ import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.request.ScoringDataDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
-import com.neoflex.deal.model.LoanOffer;
 import com.neoflex.deal.exception.DealException;
 import com.neoflex.deal.model.*;
 import com.neoflex.deal.model.enums.ApplicationStatus;
@@ -107,6 +106,7 @@ public class DealServiceImpl implements DealService {
         application.setStatusHistory(histories);
 
         applicationRepository.save(application);
+        log.info("Application updated");
 
         return application;
     }
@@ -153,6 +153,8 @@ public class DealServiceImpl implements DealService {
         CreditDTO creditDTO = conveyorClient.getCalculation(scoringDataDTO);
         updateCreditByCreditDTO(creditDTO, application);
 
+        log.info("Credit calculated");
+
         return creditDTO;
     }
 
@@ -163,6 +165,8 @@ public class DealServiceImpl implements DealService {
         Employment employment = employmentMapper.mapEmployment(employmentDTO);
         client.setEmployment(employment);
         clientRepository.save(client);
+
+        log.info("Client updated");
     }
 
     private void updateCreditByCreditDTO(CreditDTO creditDTO, Application application) {
@@ -173,5 +177,7 @@ public class DealServiceImpl implements DealService {
         credit.setCreditStatus(CreditStatus.CALCULATED);
         application.setCredit(credit);
         applicationRepository.save(application);
+
+        log.info("Credit updated");
     }
 }
