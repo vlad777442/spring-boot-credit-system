@@ -22,7 +22,7 @@ public interface LoanService {
      * @param requestDTO
      * @return
      */
-    LoanOfferDTO generateLoanOffer(Long id, boolean isInsuranceEnabled, boolean isSalaryClient, LoanApplicationRequestDTO requestDTO);
+    LoanOfferDTO generateLoanOffer(boolean isInsuranceEnabled, boolean isSalaryClient, LoanApplicationRequestDTO requestDTO);
     BigDecimal calculateLoanRateBySalaryClient(BigDecimal interestRate, boolean isSalaryClient);
     BigDecimal calculateLoanRateByInsuranceClient(BigDecimal interestRate, boolean isInsuranceEnabled);
     BigDecimal calculateLoanMonthlyPayment(BigDecimal totalAmount, Integer term);

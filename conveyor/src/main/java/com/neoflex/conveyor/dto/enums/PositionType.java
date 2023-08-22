@@ -1,13 +1,11 @@
 package com.neoflex.conveyor.dto.enums;
 
 public enum PositionType {
-    MANAGER,
-    ENGINEER,
-    ANALYST,
-    ASSISTANT,
+    WORKER,
+    MID_MANAGER,
+    TOP_MANAGER,
+    OWNER,
     JUNIOR,
     MIDDLE,
-    SENIOR,
-    DIRECTOR,
-    OTHER
+    SENIOR
 }

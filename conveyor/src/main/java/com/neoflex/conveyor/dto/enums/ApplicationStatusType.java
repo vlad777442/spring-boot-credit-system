@@ -1,10 +1,13 @@
 package com.neoflex.conveyor.dto.enums;
 
 public enum ApplicationStatusType {
-    PENDING,
+    PREAPPROVAL,
     APPROVED,
-    REJECTED,
-    CANCELLED,
-    IN_PROGRESS,
-    COMPLETED
+    CO_DENIED,
+    CO_APPROVED,
+    PREPARE_DOCUMENTS,
+    DOCUMENT_CREATED,
+    CLIENT_DENIED,
+    DOCUMENT_SIGNED,
+    CREDIT_ISSUED
 }
