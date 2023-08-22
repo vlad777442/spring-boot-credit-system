@@ -5,7 +5,7 @@ import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.request.ScoringDataDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
-import com.neoflex.deal.dto.api.response.LoanOfferDTO;
+import com.neoflex.deal.model.LoanOffer;
 import com.neoflex.deal.exception.DealException;
 import com.neoflex.deal.model.*;
 import com.neoflex.deal.model.enums.ApplicationStatus;
@@ -17,14 +17,15 @@ import com.neoflex.deal.service.ConveyorClient;
 import com.neoflex.deal.service.DealService;
 import com.neoflex.deal.service.mapper.CreditMapper;
 import com.neoflex.deal.service.mapper.EmploymentMapper;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +37,7 @@ public class DealServiceImpl implements DealService {
     private final EmploymentMapper employmentMapper;
     private final CreditMapper creditMapper;
 
-    @Override
-    public Client createClient(LoanApplicationRequestDTO requestDTO) {
+    private Client createClient(LoanApplicationRequestDTO requestDTO) {
         log.info("Creating client");
         log.debug("creating client from loanAppDto {}", requestDTO);
 
@@ -56,20 +56,15 @@ public class DealServiceImpl implements DealService {
                 .build();
     }
 
-    @Override
-    public Application createApplication(Client client) {
+    private Application createApplication(Client client) {
         log.info("Creating application");
         log.debug("creating app from client {}", client);
 
-        ArrayList<StatusHistory> statusHistories = new ArrayList<>();
-
-        StatusHistory statusHistory =  StatusHistory.builder()
+        List<StatusHistory> statusHistories = List.of(StatusHistory.builder()
                 .status(ApplicationStatus.PREAPPROVAL)
                 .time(LocalDateTime.now())
                 .changeType(ChangeType.AUTOMATIC)
-                .build();
-
-        statusHistories.add(statusHistory);
+                .build());
 
         return Application.builder()
                 .client(client)
@@ -80,75 +75,66 @@ public class DealServiceImpl implements DealService {
     }
 
     @Override
-    public List<LoanOfferDTO> getLoanOffers(LoanApplicationRequestDTO requestDTO) {
+    @Transactional
+    public List<LoanOffer> application(LoanApplicationRequestDTO requestDTO) {
         log.info("Getting loan offers");
         log.debug("Getting offers from request {}", requestDTO);
 
         Client client =  clientRepository.save(createClient(requestDTO));
-        applicationRepository.save(createApplication(client));
+        Application application = createApplication(client);
+        applicationRepository.save(application);
 
-        return conveyorClient.getLoanOffers(requestDTO);
+        List<LoanOffer> offers = conveyorClient.getLoanOffers(requestDTO);
+        AtomicLong counter = new AtomicLong(1L);
+        offers.forEach(offer -> offer.setApplicationId(counter.getAndIncrement()));
+
+        return offers;
     }
 
     @Override
-    public Application updateApplication(LoanOfferDTO loanOfferDTO) {
+    public Application updateApplication(LoanOffer loanOffer) {
         log.info("UPDATING APPLICATION");
-        log.debug("Updating application from loan offer {}", loanOfferDTO);
+        log.debug("Updating application from loan offer {}", loanOffer);
 
-        Optional<Application> optApplication = applicationRepository.findById(loanOfferDTO.getApplicationId());
-        Application application;
-
-        if (optApplication.isPresent()) {
-            application = optApplication.get();
-        }
-        else {
-            throw new DealException("The application does not exist");
-        }
+        Optional<Application> optApplication = applicationRepository.findById(loanOffer.getApplicationId());
+        Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
 
         application.setStatus(ApplicationStatus.APPROVED);
-        application.setAppliedOffer(loanOfferDTO);
-        updateApplicationHistory(application);
+        application.setAppliedOffer(loanOffer);
+
+        List<StatusHistory> histories = application.getStatusHistory();
+        histories.add(updateApplicationHistory(ApplicationStatus.APPROVED, ChangeType.AUTOMATIC));
+        application.setStatusHistory(histories);
+
         applicationRepository.save(application);
 
         return application;
     }
 
-    private void updateApplicationHistory(Application application) {
+    private StatusHistory updateApplicationHistory(ApplicationStatus status, ChangeType type) {
         log.info("Updating application history");
-        log.debug("Updating application history {}", application);
+        log.debug("Updating application history {} {}", status, type);
 
-        List<StatusHistory> historyDTO = application.getStatusHistory();
-
-        StatusHistory statusHistory = StatusHistory.builder()
-                .status(ApplicationStatus.APPROVED)
+        return StatusHistory.builder()
+                .status(status)
                 .time(LocalDateTime.now())
-                .changeType(ChangeType.AUTOMATIC)
+                .changeType(type)
                 .build();
-
-        historyDTO.add(statusHistory);
     }
 
     @Override
+    @Transactional
     public CreditDTO calculateCreditByApplicationId(Long applicationId, FinishRegistrationRequestDTO requestDTO) {
         log.info("CALCULATING CREDIT DETAILS FROM APP ID");
         log.debug("Calculating credit from request {} {}", applicationId, requestDTO);
 
         Optional<Application> optApplication = applicationRepository.findById(applicationId);
-        Application application;
-
-        if (optApplication.isPresent()) {
-            application = optApplication.get();
-        }
-        else {
-            throw new DealException("The application does not exist");
-        }
+        Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
 
         Client client = application.getClient();
         updateClientByEmployment(requestDTO.getEmployment(), client);
 
         ScoringDataDTO scoringDataDTO = ScoringDataDTO.builder()
-                .amount(application.getCredit().getAmount())
-                .term(application.getCredit().getTerm())
                 .firstName(client.getFirstName())
                 .lastName(client.getLastName())
                 .middleName(client.getMiddleName())
@@ -162,8 +148,6 @@ public class DealServiceImpl implements DealService {
                 .dependentAmount(requestDTO.getDependentAmount())
                 .employment(requestDTO.getEmployment())
                 .account(requestDTO.getAccount())
-                .isInsuranceEnabled(application.getCredit().getIsInsuranceEnabled())
-                .isSalaryClient(application.getCredit().getIsSalaryClient())
                 .build();
 
         CreditDTO creditDTO = conveyorClient.getCalculation(scoringDataDTO);

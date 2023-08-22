@@ -1,7 +1,6 @@
 package com.neoflex.deal.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -43,7 +42,7 @@ public class Application {
 
     @Column(name = "applied_offer")
     @JdbcTypeCode(SqlTypes.JSON)
-    private LoanOfferDTO appliedOffer;
+    private LoanOffer appliedOffer;
 
     @Column(name = "sign_date")
     private LocalDateTime signDate;

@@ -8,5 +8,11 @@ spring:
     hibernate:
       ddl-auto: create
     show-sql: true
+
 server:
   port: 8090
+
+service:
+  integration:
+    conveyor:
+      url: "http://localhost:8080/conveyor"

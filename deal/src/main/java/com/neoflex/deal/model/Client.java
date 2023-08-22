@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 
@@ -50,9 +52,11 @@ public class Client {
     private Integer dependentAmount;
 
     @Column(name = "passport_id")
+    @JdbcTypeCode(SqlTypes.JSON)
     private Passport passport;
 
     @Column(name = "employment_id")
+    @JdbcTypeCode(SqlTypes.JSON)
     private Employment employment;
 
     @Column(name = "account")

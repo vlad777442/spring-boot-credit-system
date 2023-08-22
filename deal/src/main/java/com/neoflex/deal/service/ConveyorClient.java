@@ -3,7 +3,7 @@ package com.neoflex.deal.service;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.request.ScoringDataDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
-import com.neoflex.deal.dto.api.response.LoanOfferDTO;
+import com.neoflex.deal.model.LoanOffer;
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 
 @Component
-@FeignClient(value = "conveyor", url = "http://localhost:8080/conveyor")
+@FeignClient(value = "conveyor", url = "${service.integration.conveyor.url}")
 public interface ConveyorClient {
     @PostMapping("/offers")
-    List<LoanOfferDTO> getLoanOffers(@Valid @RequestBody LoanApplicationRequestDTO requestDTO);
+    List<LoanOffer> getLoanOffers(@Valid @RequestBody LoanApplicationRequestDTO requestDTO);
 
     @PostMapping("/calculation")
     CreditDTO getCalculation(@Valid @RequestBody ScoringDataDTO dataDTO);
