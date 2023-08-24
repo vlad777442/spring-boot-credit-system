@@ -3,12 +3,14 @@ package com.neoflex.deal.dto.api.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
 @Builder
+@Jacksonized
 @Schema(description = "Payment schedule dto")
 public class PaymentScheduleElement {
     private Integer number;

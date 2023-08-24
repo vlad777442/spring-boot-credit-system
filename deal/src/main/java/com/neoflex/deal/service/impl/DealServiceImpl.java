@@ -16,6 +16,7 @@ import com.neoflex.deal.model.enums.CreditStatus;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.ClientRepository;
 import com.neoflex.deal.client.ConveyorClient;
+import com.neoflex.deal.repository.CreditRepository;
 import com.neoflex.deal.service.DealService;
 import com.neoflex.deal.mapper.CreditMapper;
 import com.neoflex.deal.mapper.EmploymentMapper;
@@ -35,6 +36,7 @@ import java.util.Optional;
 public class DealServiceImpl implements DealService {
     private final ApplicationRepository applicationRepository;
     private final ClientRepository clientRepository;
+    private final CreditRepository creditRepository;
     private final ConveyorClient conveyorClient;
     private final EmploymentMapper employmentMapper;
     private final CreditMapper creditMapper;
@@ -173,6 +175,7 @@ public class DealServiceImpl implements DealService {
         Credit credit = creditMapper.mapCredit(creditDTO);
         credit.setCreditStatus(CreditStatus.CALCULATED);
         application.setCredit(credit);
+        creditRepository.save(credit);
         applicationRepository.save(application);
 
         log.info("Credit updated");

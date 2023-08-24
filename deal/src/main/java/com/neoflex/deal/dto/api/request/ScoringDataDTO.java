@@ -6,12 +6,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
 @Builder
+@Jacksonized
 @Schema(description = "Scoring data dto")
 public class ScoringDataDTO {
     @Schema(description = "Loan amount", example = "200000")

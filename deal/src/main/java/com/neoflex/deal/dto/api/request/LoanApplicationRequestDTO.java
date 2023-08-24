@@ -4,12 +4,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
 @Builder
+@Jacksonized
 @Schema(description = "Loan application dto")
 public class LoanApplicationRequestDTO {
     @Schema(description = "Loan amount", example = "500000")

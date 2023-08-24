@@ -1,13 +1,8 @@
 package com.neoflex.deal.dto.enums;
 
 public enum PositionType {
-    MANAGER,
-    ENGINEER,
-    ANALYST,
-    ASSISTANT,
-    JUNIOR,
-    MIDDLE,
-    SENIOR,
-    DIRECTOR,
-    OTHER
+    WORKER,
+    MID_MANAGER,
+    TOP_MANAGER,
+    OWNER
 }

@@ -8,12 +8,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
 
 import java.time.LocalDate;
 
 @Data
-@Schema(description = "Registration dto")
 @Builder
+@Jacksonized
+@Schema(description = "Registration dto")
 public class FinishRegistrationRequestDTO {
     @Schema(description = "Gender type", example = "MALE")
     private GenderType gender;

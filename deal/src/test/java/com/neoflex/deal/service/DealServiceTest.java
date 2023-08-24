@@ -12,14 +12,15 @@ import com.neoflex.deal.dto.enums.MaritalStatusType;
 import com.neoflex.deal.dto.enums.PositionType;
 import com.neoflex.deal.mapper.CreditMapper;
 import com.neoflex.deal.mapper.EmploymentMapper;
+import com.neoflex.deal.mapper.LoanOfferMapper;
 import com.neoflex.deal.mapper.ScoringDataMapper;
-import com.neoflex.deal.mapper.impl.LoanOfferMapperMyImpl;
 import com.neoflex.deal.model.*;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import com.neoflex.deal.model.enums.ChangeType;
 import com.neoflex.deal.model.enums.EmploymentStatus;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.ClientRepository;
+import com.neoflex.deal.repository.CreditRepository;
 import com.neoflex.deal.service.impl.DealServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +57,9 @@ class DealServiceTest {
     private ClientRepository clientRepository;
 
     @Mock
+    private CreditRepository creditRepository;
+
+    @Mock
     private ConveyorClient conveyorClient;
 
     @Spy
@@ -65,7 +69,7 @@ class DealServiceTest {
     private CreditMapper creditMapper;
 
     @Spy
-    private LoanOfferMapperMyImpl loanOfferMapper;
+    private LoanOfferMapper loanOfferMapper;
 
     @Spy
     ScoringDataMapper scoringDataMapper;
@@ -134,6 +138,19 @@ class DealServiceTest {
                 .build();
     }
 
+    private LoanOffer getLoanOffer() {
+        return LoanOffer.builder()
+                .applicationId(1L)
+                .requestedAmount(BigDecimal.valueOf(100000))
+                .totalAmount(BigDecimal.valueOf(115000).setScale(2, RoundingMode.HALF_UP))
+                .term(12)
+                .monthlyPayment(BigDecimal.valueOf(9583.33))
+                .rate(BigDecimal.valueOf(15.0))
+                .isInsuranceEnabled(false)
+                .isSalaryClient(false)
+                .build();
+    }
+
     private FinishRegistrationRequestDTO getFinishRegistrationRequestDTO() {
         return FinishRegistrationRequestDTO.builder()
                 .gender(GenderType.FEMALE)
@@ -170,7 +187,7 @@ class DealServiceTest {
                 .employmentStatus(EmploymentStatus.BUSINESS_OWNER)
                 .employerINN("12345678910")
                 .salary(BigDecimal.valueOf(10000000))
-                .position(PositionType.SENIOR)
+                .position(PositionType.TOP_MANAGER)
                 .workExperienceTotal(36)
                 .workExperienceCurrent(12)
                 .build();
@@ -259,12 +276,13 @@ class DealServiceTest {
     @Test
     void updateApplication() {
         when(applicationRepository.findById(1L)).thenReturn(Optional.of(getApplication()));
+        when(loanOfferMapper.mapToLoanOffer(any(LoanOfferDTO.class))).thenReturn(getLoanOffer());
 
         Application actual = dealService.updateApplication(getLoanOfferDTO());
         Application expected = getApplication();
 
         expected.setStatus(ApplicationStatus.APPROVED);
-        expected.setAppliedOffer(loanOfferMapper.mapToLoanOffer(getLoanOfferDTO()));
+        expected.setAppliedOffer(getLoanOffer());
 
         assertAll(
                 () -> assertEquals(expected.getStatus(), actual.getStatus()),
@@ -275,7 +293,7 @@ class DealServiceTest {
     @Test
     void calculateCreditByApplicationId() {
         Optional<Application> application = Optional.of(getApplication());
-        application.get().setAppliedOffer(loanOfferMapper.mapToLoanOffer(getLoanOfferDTO()));
+        application.get().setAppliedOffer(getLoanOffer());
         when(applicationRepository.findById(1L)).thenReturn(application);
         when(conveyorClient.getCalculation(any(ScoringDataDTO.class))).thenReturn(getCreditDTO());
         when(creditMapper.mapCredit(any(CreditDTO.class))).thenReturn(getCredit());

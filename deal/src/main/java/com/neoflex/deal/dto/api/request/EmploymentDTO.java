@@ -5,11 +5,13 @@ import com.neoflex.deal.model.enums.EmploymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
 
 import java.math.BigDecimal;
 
 @Data
 @Builder
+@Jacksonized
 @Schema(description = "Employment dto")
 public class EmploymentDTO {
     @Schema(description = "Employment status type", example = "EMPLOYED")
@@ -21,7 +23,7 @@ public class EmploymentDTO {
     @Schema(description = "Salary amount", example = "50000")
     private BigDecimal salary;
 
-    @Schema(description = "Position type", example = "JUNIOR")
+    @Schema(description = "Position type", example = "WORKER")
     private PositionType position;
 
     @Schema(description = "Total work experience in months", example = "24")
