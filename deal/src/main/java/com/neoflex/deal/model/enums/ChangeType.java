@@ -1,4 +1,4 @@
-package com.neoflex.conveyor.dto.enums;
+package com.neoflex.deal.model.enums;
 
 public enum ChangeType {
     AUTOMATIC,

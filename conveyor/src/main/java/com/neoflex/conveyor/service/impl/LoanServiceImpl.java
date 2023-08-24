@@ -27,15 +27,15 @@ public class LoanServiceImpl implements LoanService {
     public List<LoanOfferDTO> getLoanOffers(LoanApplicationRequestDTO requestDTO) {
         log.info("STARTED GET LOAN OFFERS");
 
-        return Stream.of(generateLoanOffer(1L, false, false, requestDTO),
-                generateLoanOffer(2L, false, true, requestDTO),
-                generateLoanOffer(3L, true, false, requestDTO),
-                generateLoanOffer(4L, true, true, requestDTO))
+        return Stream.of(generateLoanOffer( false, false, requestDTO),
+                generateLoanOffer(false, true, requestDTO),
+                generateLoanOffer(true, false, requestDTO),
+                generateLoanOffer(true, true, requestDTO))
                 .sorted(Comparator.comparing(LoanOfferDTO::getRate).reversed()).toList();
     }
 
     @Override
-    public LoanOfferDTO generateLoanOffer(Long id, boolean isInsuranceEnabled, boolean isSalaryClient, LoanApplicationRequestDTO requestDTO) {
+    public LoanOfferDTO generateLoanOffer(boolean isInsuranceEnabled, boolean isSalaryClient, LoanApplicationRequestDTO requestDTO) {
         log.info("STARTED GENERATING LOAN OFFERS");
         isLoanApplicationValid(requestDTO);
 
@@ -52,7 +52,6 @@ public class LoanServiceImpl implements LoanService {
         BigDecimal monthlyPayment = calculateLoanMonthlyPayment(totalAmount, term);
 
         return LoanOfferDTO.builder()
-                .applicationId(id)
                 .requestedAmount(requestDTO.getAmount())
                 .totalAmount(totalAmount)
                 .term(requestDTO.getTerm())

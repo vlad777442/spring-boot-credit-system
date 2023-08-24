@@ -61,7 +61,6 @@ class LoanServiceImplTest {
     @Test
     void getLoanOffers() {
         LoanOfferDTO loanOffer1 = LoanOfferDTO.builder()
-                .applicationId(1L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(115000).setScale(2, RoundingMode.HALF_UP))
                 .term(12)
@@ -72,7 +71,6 @@ class LoanServiceImplTest {
                 .build();
 
         LoanOfferDTO loanOffer2 = LoanOfferDTO.builder()
-                .applicationId(3L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(112960).setScale(2, RoundingMode.HALF_UP))
                 .term(12)
@@ -83,7 +81,6 @@ class LoanServiceImplTest {
                 .build();
 
         LoanOfferDTO loanOffer3 = LoanOfferDTO.builder()
-                .applicationId(2L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(111040).setScale(2, RoundingMode.HALF_UP))
                 .term(12)
@@ -94,7 +91,6 @@ class LoanServiceImplTest {
                 .build();
 
         LoanOfferDTO loanOffer4 = LoanOfferDTO.builder()
-                .applicationId(4L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(109000).setScale(2, RoundingMode.HALF_UP))
                 .term(12)
@@ -116,7 +112,6 @@ class LoanServiceImplTest {
     @Test
     void generateLoanOffer() {
         LoanOfferDTO expected = LoanOfferDTO.builder()
-                .applicationId(1L)
                 .requestedAmount(BigDecimal.valueOf(100000))
                 .totalAmount(BigDecimal.valueOf(115000).setScale(2, RoundingMode.HALF_UP))
                 .term(12)
@@ -126,7 +121,7 @@ class LoanServiceImplTest {
                 .isSalaryClient(false)
                 .build();
 
-        LoanOfferDTO actual = loanService.generateLoanOffer(1L, false, false, getLoanApplicationRequestDTO());
+        LoanOfferDTO actual = loanService.generateLoanOffer(false, false, getLoanApplicationRequestDTO());
 
         assertAll(
                 () ->  assertEquals(expected, actual)

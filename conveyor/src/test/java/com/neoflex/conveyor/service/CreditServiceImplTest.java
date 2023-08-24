@@ -57,7 +57,7 @@ class CreditServiceImplTest {
                 .employmentStatus(EmploymentStatusType.BUSINESS_OWNER)
                 .employerINN("12345678910")
                 .salary(BigDecimal.valueOf(10000000))
-                .position(PositionType.SENIOR)
+                .position(PositionType.TOP_MANAGER)
                 .workExperienceTotal(36)
                 .workExperienceCurrent(12)
                 .build();

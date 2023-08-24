@@ -67,10 +67,10 @@ public class CreditServiceImpl implements CreditService {
         log.info("CHECKING EMPLOYMENT STATUS");
         PositionType type = scoringDataDTO.getEmployment().getPosition();
 
-        if (type == PositionType.MIDDLE) {
+        if (type == PositionType.MID_MANAGER) {
             interestRate = interestRate.subtract(creditProperties.getMiddlePositionDiscount());
         }
-        else if (type == PositionType.SENIOR) {
+        else if (type == PositionType.TOP_MANAGER) {
             interestRate = interestRate.subtract(creditProperties.getSeniorPositionDiscount());
         }
 
