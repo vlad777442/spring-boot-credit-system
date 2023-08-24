@@ -4,8 +4,5 @@ public enum PositionType {
     WORKER,
     MID_MANAGER,
     TOP_MANAGER,
-    OWNER,
-    JUNIOR,
-    MIDDLE,
-    SENIOR
+    OWNER
 }
