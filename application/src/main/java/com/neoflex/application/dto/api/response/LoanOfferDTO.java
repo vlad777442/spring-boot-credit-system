@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 @Jacksonized
 @Schema(description = "Loan offer dto")
 public class LoanOfferDTO {
-    @Schema(description = "Application ID", example = "12345")
+    @Schema(description = "Application ID", example = "1")
     private Long applicationId;
 
     @Schema(description = "Requested loan amount", example = "10000.00")

@@ -3,7 +3,9 @@ package com.neoflex.application.service.impl;
 import com.neoflex.application.client.DealClient;
 import com.neoflex.application.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.application.dto.api.response.LoanOfferDTO;
+import com.neoflex.application.exception.ApplicationException;
 import com.neoflex.application.service.ApplicationService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,7 +23,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         log.info("Requesting loan offers from MC Deal");
         log.debug("LoanApplicationRequestDTO {}", requestDTO);
 
-        return dealClient.application(requestDTO);
+        try {
+            return dealClient.application(requestDTO);
+        } catch (FeignException ex) {
+            log.error("Feign Client error during loan offer request: {}", ex.getMessage(), ex);
+            throw new ApplicationException(ex.getMessage());
+        }
     }
 
     @Override
@@ -29,7 +36,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         log.info("Applying loan offer using MC Deal {}", loanOffer);
         log.debug("LoanOfferDTO {}", loanOffer);
 
-        dealClient.applyLoanOffer(loanOffer);
+        try {
+            dealClient.applyLoanOffer(loanOffer);
+            log.info("Finished applying offer");
+        } catch (FeignException ex) {
+            log.error("Feign Client error during applying loan offer: {}", ex.getMessage(), ex);
+            throw new ApplicationException(ex.getMessage());
+        }
+
         log.info("Finished applying offer");
     }
 }
