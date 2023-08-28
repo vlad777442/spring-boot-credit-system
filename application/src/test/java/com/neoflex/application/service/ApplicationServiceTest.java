@@ -3,7 +3,9 @@ package com.neoflex.application.service;
 import com.neoflex.application.client.DealClient;
 import com.neoflex.application.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.application.dto.api.response.LoanOfferDTO;
+import com.neoflex.application.exception.ApplicationException;
 import com.neoflex.application.service.impl.ApplicationServiceImpl;
+import feign.FeignException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,8 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -116,10 +117,38 @@ class ApplicationServiceTest {
     }
 
     @Test
+    void testApplicationWithException() {
+        when(dealClient.application(getLoanApplicationRequestDTO())).thenThrow(FeignException.class);
+        LoanApplicationRequestDTO requestDTO = getLoanApplicationRequestDTO();
+
+        Throwable exception = assertThrows(ApplicationException.class,
+                ()  ->  applicationService.application(requestDTO)
+        );
+
+        assertAll(
+                () -> assertEquals(ApplicationException.class, exception.getClass())
+        );
+    }
+
+    @Test
     void applyLoanOffer() {
         LoanOfferDTO loanOfferDTO = getLoanOfferDTO();
         applicationService.applyLoanOffer(loanOfferDTO);
 
         verify(dealClient, times(1)).applyLoanOffer(loanOfferDTO);
+    }
+
+    @Test
+    void testApplyLoanOfferWithException() {
+        doThrow(FeignException.class).when(dealClient).applyLoanOffer(getLoanOfferDTO());
+        LoanOfferDTO loanOfferDTO = getLoanOfferDTO();
+
+        Throwable exception = assertThrows(ApplicationException.class,
+                ()  ->  applicationService.applyLoanOffer(loanOfferDTO)
+        );
+
+        assertAll(
+                () -> assertEquals(ApplicationException.class, exception.getClass())
+        );
     }
 }
