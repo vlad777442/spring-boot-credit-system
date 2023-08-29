@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 
 @Component
-@FeignClient(value = "conveyor", url = "${service.integration.deal.url}")
+@FeignClient(value = "deal", url = "${service.integration.deal.url}")
 public interface DealClient {
     @PostMapping("/application")
     List<LoanOfferDTO> application(@RequestBody LoanApplicationRequestDTO request);

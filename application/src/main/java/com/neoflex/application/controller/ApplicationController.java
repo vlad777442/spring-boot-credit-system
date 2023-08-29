@@ -20,7 +20,6 @@ public class ApplicationController {
     @Operation(summary = "Получение списка 4 возможных займов")
     @PostMapping("/")
     public List<LoanOfferDTO> getOffers(@RequestBody @Valid LoanApplicationRequestDTO requestDTO) {
-
         return applicationService.application(requestDTO);
     }
 

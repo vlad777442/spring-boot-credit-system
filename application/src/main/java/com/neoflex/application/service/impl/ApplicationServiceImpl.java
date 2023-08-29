@@ -24,7 +24,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         log.debug("LoanApplicationRequestDTO {}", requestDTO);
 
         try {
-            return dealClient.application(requestDTO);
+            List<LoanOfferDTO> loanOffers = dealClient.application(requestDTO);
+            log.info("Received {} loan offers from MC Deal", loanOffers.size());
+            return loanOffers;
         } catch (FeignException ex) {
             log.error("Feign Client error during loan offer request: {}", ex.getMessage(), ex);
             throw new ApplicationException(ex.getMessage());
@@ -43,7 +45,5 @@ public class ApplicationServiceImpl implements ApplicationService {
             log.error("Feign Client error during applying loan offer: {}", ex.getMessage(), ex);
             throw new ApplicationException(ex.getMessage());
         }
-
-        log.info("Finished applying offer");
     }
 }
