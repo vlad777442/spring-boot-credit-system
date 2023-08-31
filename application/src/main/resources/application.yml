@@ -1,0 +1,8 @@
+server:
+  port: 8091
+
+service:
+  integration:
+    deal:
+      url: "http://localhost:8090/deal"
+
