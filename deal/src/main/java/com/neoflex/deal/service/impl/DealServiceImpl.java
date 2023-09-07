@@ -6,6 +6,7 @@ import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.request.ScoringDataDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
 import com.neoflex.deal.dto.api.response.LoanOfferDTO;
+import com.neoflex.deal.dto.enums.EmailThemeType;
 import com.neoflex.deal.exception.DealException;
 import com.neoflex.deal.mapper.LoanOfferMapper;
 import com.neoflex.deal.mapper.ScoringDataMapper;
@@ -13,6 +14,7 @@ import com.neoflex.deal.model.*;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import com.neoflex.deal.model.enums.ChangeType;
 import com.neoflex.deal.model.enums.CreditStatus;
+import com.neoflex.deal.producer.DocumentProducer;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.ClientRepository;
 import com.neoflex.deal.client.ConveyorClient;
@@ -42,6 +44,7 @@ public class DealServiceImpl implements DealService {
     private final CreditMapper creditMapper;
     private final LoanOfferMapper loanOfferMapper;
     private final ScoringDataMapper scoringDataMapper;
+    private final DocumentProducer documentProducer;
 
     private Client createClient(LoanApplicationRequestDTO requestDTO) {
         log.info("Creating client");
@@ -121,6 +124,7 @@ public class DealServiceImpl implements DealService {
         log.info("Building application history");
         histories.add(buildApplicationHistory(ApplicationStatus.APPROVED, ChangeType.AUTOMATIC));
         application.setStatusHistory(histories);
+        documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.FINISH_REGISTRATION));
 
         applicationRepository.save(application);
         log.info("Application updated");
@@ -128,7 +132,7 @@ public class DealServiceImpl implements DealService {
         return application;
     }
 
-    private StatusHistory buildApplicationHistory(ApplicationStatus status, ChangeType type) {
+    public StatusHistory buildApplicationHistory(ApplicationStatus status, ChangeType type) {
         return StatusHistory.builder()
                 .status(status)
                 .time(LocalDateTime.now())

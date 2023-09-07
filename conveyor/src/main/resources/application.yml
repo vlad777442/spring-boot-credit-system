@@ -28,3 +28,6 @@ service:
     femaleBetween35And60Discount: 3.0
     maleBetween30And55Discount: 3.0
     nonBinaryAdd: 3.0
+
+server:
+  port: 8181

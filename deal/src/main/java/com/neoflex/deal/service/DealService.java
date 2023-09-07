@@ -5,6 +5,9 @@ import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.deal.dto.api.response.CreditDTO;
 import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.model.Application;
+import com.neoflex.deal.model.StatusHistory;
+import com.neoflex.deal.model.enums.ApplicationStatus;
+import com.neoflex.deal.model.enums.ChangeType;
 
 import java.util.List;
 
@@ -30,4 +33,12 @@ public interface DealService {
      * @return credit details as CreditDTO
      */
     CreditDTO calculateCreditByApplicationId(Long applicationId, FinishRegistrationRequestDTO requestDTO);
+
+    /**
+     * This method creates StatusHistory
+     * @param status
+     * @param type
+     * @return
+     */
+    StatusHistory buildApplicationHistory(ApplicationStatus status, ChangeType type);
 }
