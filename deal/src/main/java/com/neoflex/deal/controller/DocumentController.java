@@ -4,10 +4,7 @@ import com.neoflex.deal.service.DocumentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -29,8 +26,8 @@ public class DocumentController {
     }
 
     @PostMapping("/{applicationId}/code")
-    public void signDocumentByCode(@PathVariable Long applicationId) {
+    public void signDocumentByCode(@PathVariable Long applicationId, @RequestBody Integer sesCode) {
         log.info("Sending request to sign document by code {}", applicationId);
-        documentService.signDocumentByCode(applicationId);
+        documentService.signDocumentByCode(applicationId, sesCode);
     }
 }

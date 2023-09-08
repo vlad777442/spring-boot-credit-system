@@ -5,5 +5,5 @@ public interface DocumentService {
 
     void requestDocumentSigning(Long applicationId);
 
-    void signDocumentByCode(Long applicationId);
+    void signDocumentByCode(Long applicationId, Integer sesCode);
 }

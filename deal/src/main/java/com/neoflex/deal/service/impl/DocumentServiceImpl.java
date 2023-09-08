@@ -2,6 +2,7 @@ package com.neoflex.deal.service.impl;
 
 import com.neoflex.deal.dto.enums.EmailThemeType;
 import com.neoflex.deal.exception.DealException;
+import com.neoflex.deal.exception.SesException;
 import com.neoflex.deal.model.Application;
 import com.neoflex.deal.model.Credit;
 import com.neoflex.deal.model.StatusHistory;
@@ -18,8 +19,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -55,7 +59,9 @@ public class DocumentServiceImpl implements DocumentService {
         Optional<Application> optApplication = applicationRepository.findById(applicationId);
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
 
-        application.setSesCode(Long.toHexString(applicationId));
+        String sesCode = generateSesCode();
+        application.setSesCode(sesCode);
+        log.info("Ses code {} for application #{} was generated", sesCode, applicationId);
         application.setStatus(ApplicationStatus.DOCUMENT_SIGNED);
         applicationRepository.save(application);
 
@@ -64,20 +70,27 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public void signDocumentByCode(Long applicationId) {
+    public void signDocumentByCode(Long applicationId, Integer sesCode) {
         log.info("Received DOCUMENT_SIGNED. Sending request to DocumentProducer");
 
         Optional<Application> optApplication = applicationRepository.findById(applicationId);
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
         List<StatusHistory> statusHistoryList = application.getStatusHistory();
 
-        application = updateCredit(application, CreditStatus.ISSUED);
-        application.setStatus(ApplicationStatus.DOCUMENT_SIGNED);
-        statusHistoryList.add(dealService.buildApplicationHistory(ApplicationStatus.DOCUMENT_SIGNED, ChangeType.AUTOMATIC));
-        applicationRepository.save(application);
+        if (checkSesCode(application, sesCode)) {
+            application = updateCredit(application, CreditStatus.ISSUED);
+            application.setSesCode(sesCode.toString());
+            application.setStatus(ApplicationStatus.DOCUMENT_SIGNED);
+            application.setSignDate(LocalDateTime.now());
+            statusHistoryList.add(dealService.buildApplicationHistory(ApplicationStatus.DOCUMENT_SIGNED, ChangeType.AUTOMATIC));
+            applicationRepository.save(application);
 
-        documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.CREDIT_ISSUED));
-        log.info("Document has been successfully sent to DocumentProducer");
+            documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.CREDIT_ISSUED));
+            log.info("Document has been successfully sent to DocumentProducer");
+        } else {
+            log.error("Ses code is incorrect");
+            throw new SesException("Ses number is incorrect");
+        }
     }
 
     private Application updateCredit(Application application, CreditStatus creditStatus) {
@@ -93,5 +106,19 @@ public class DocumentServiceImpl implements DocumentService {
 
         log.info("Credit successfully updated");
         return applicationRepository.save(application);
+    }
+
+    private String generateSesCode() {
+        Random random = new Random();
+        int min = 1000;
+        int max = 10000;
+
+        return String.valueOf(random.nextInt((max - min) + 1) + min);
+    }
+
+    private boolean checkSesCode(Application application, Integer sesCode) {
+        if (application.getSesCode().equals(sesCode.toString()))
+            return true;
+        return false;
     }
 }

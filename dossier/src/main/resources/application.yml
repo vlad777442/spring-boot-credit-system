@@ -3,15 +3,17 @@ spring:
     bootstrap-servers: localhost:9092
     consumer:
       group-id: "deal"
+#  config:
+#    import:optional:file:.env[.properties]
 
   mail:
-    host: smtp.gmail.com
-    port: 587
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
-    username: yourmail@example.com
-    password: somepassword
+    username: ${MAIL_USERNAME:yourmail@example.com}
+    password: ${MAIL_PASSWORD:somepassword}
 
 server:
   port: 8380
