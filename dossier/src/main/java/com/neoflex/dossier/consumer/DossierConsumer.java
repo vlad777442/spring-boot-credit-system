@@ -4,6 +4,7 @@ import com.neoflex.dossier.dto.EmailMessageDTO;
 import com.neoflex.dossier.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DossierConsumer {
     private final EmailService emailService;
+
+    @Value("${deal.dataPath}")
+    private String absolutePath;
 
     @KafkaListener(topics = "finish-registration", groupId = "deal")
     public void listenFinishRegistration(EmailMessageDTO emailMessageDTO) {
@@ -30,7 +34,7 @@ public class DossierConsumer {
     @KafkaListener(topics = "create-documents", groupId = "deal")
     public void listenCreateDocuments(EmailMessageDTO emailMessageDTO) {
         log.info("Request for create documents received: " + emailMessageDTO.toString());
-        String body = "Созданы документы для заявки №" + emailMessageDTO.getApplicationId() + ".";
+        String body = "Подготовлены документы для заявки №" + emailMessageDTO.getApplicationId();
 
         emailService.sendEmail(
                 emailMessageDTO.getAddress(),
@@ -45,11 +49,17 @@ public class DossierConsumer {
     public void listenSendDocuments(EmailMessageDTO emailMessageDTO) {
         log.info("Request for send documents received: " + emailMessageDTO.toString());
         String body = "Документы для завки №" + emailMessageDTO.getApplicationId() + " отправлены.";
+        String[] path = {
+                absolutePath +  emailMessageDTO.getApplicationId() + "/credit.txt",
+                absolutePath +  emailMessageDTO.getApplicationId() + "/client.txt",
+                absolutePath +  emailMessageDTO.getApplicationId() + "/paymentSchedule.txt",
+        };
 
-        emailService.sendEmail(
+        emailService.sendEmailWithAttachments(
                 emailMessageDTO.getAddress(),
                 emailMessageDTO.getTheme().toString(),
-                body
+                body,
+                path
         );
 
         log.info("Sent email request to EmailService for send documents");
@@ -59,11 +69,13 @@ public class DossierConsumer {
     public void listenSendSes(EmailMessageDTO emailMessageDTO) {
         log.info("Request for send ses received: " + emailMessageDTO.toString());
         String body = "Код для подписания завки №" + emailMessageDTO.getApplicationId() + " был сгенерирован.";
+        String[] path = {absolutePath +  emailMessageDTO.getApplicationId() + "/ses.txt"};
 
-        emailService.sendEmail(
+        emailService.sendEmailWithAttachments(
                 emailMessageDTO.getAddress(),
                 emailMessageDTO.getTheme().toString(),
-                body
+                body,
+                path
         );
 
         log.info("Sent email request to EmailService for send ses");
@@ -72,7 +84,7 @@ public class DossierConsumer {
     @KafkaListener(topics = "credit-issued", groupId = "deal")
     public void listenCreditIssued(EmailMessageDTO emailMessageDTO) {
         log.info("Request for credit issued received: " + emailMessageDTO.toString());
-        String body = "Заявка №" + emailMessageDTO.getApplicationId() + " была успешно одобрена!";
+        String body = "Заявка №" + emailMessageDTO.getApplicationId() + " была успешно выполнена!";
 
         emailService.sendEmail(
                 emailMessageDTO.getAddress(),

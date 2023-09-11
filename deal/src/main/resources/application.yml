@@ -20,3 +20,10 @@ service:
   integration:
     conveyor:
       url: "http://localhost:8181/conveyor"
+
+deal:
+  dataPath: "D:/creditConveyor/deal/"
+
+credit:
+  minRate: 5.0
+  maxRate: 40.0

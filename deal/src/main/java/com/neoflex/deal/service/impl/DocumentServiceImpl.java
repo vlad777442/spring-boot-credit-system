@@ -1,5 +1,6 @@
 package com.neoflex.deal.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neoflex.deal.dto.enums.EmailThemeType;
 import com.neoflex.deal.exception.DealException;
 import com.neoflex.deal.exception.SesException;
@@ -17,13 +18,15 @@ import com.neoflex.deal.service.DocumentService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -37,6 +40,11 @@ public class DocumentServiceImpl implements DocumentService {
 
     private final DealService dealService;
 
+    private final ObjectMapper objectMapper;
+
+    @Value("${deal.dataPath}")
+    private String absoluteDirectory;
+
     @Override
     public void sendDocument(Long applicationId) {
         log.info("Received SEND_DOCUMENTS. Sending request to DocumentProducer");
@@ -46,6 +54,10 @@ public class DocumentServiceImpl implements DocumentService {
 
         application.setStatus(ApplicationStatus.PREPARE_DOCUMENTS);
         applicationRepository.save(application);
+
+        saveToFile(application.getApplicationId(), "credit", application.getCredit().toString());
+        saveToFile(application.getApplicationId(), "client", application.getClient().toString());
+        saveToFile(application.getApplicationId(), "paymentSchedule", application.getCredit().getPaymentSchedule().toString());
 
         documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.SEND_DOCUMENTS));
         log.info("Document has been successfully sent to DocumentProducer");
@@ -62,9 +74,9 @@ public class DocumentServiceImpl implements DocumentService {
         String sesCode = generateSesCode();
         application.setSesCode(sesCode);
         log.info("Ses code {} for application #{} was generated", sesCode, applicationId);
-        application.setStatus(ApplicationStatus.DOCUMENT_SIGNED);
         applicationRepository.save(application);
 
+        saveToFile(application.getApplicationId(), "ses", application.getSesCode().toString());
         documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.SEND_SES));
         log.info("Document has been successfully sent to DocumentProducer");
     }
@@ -120,5 +132,29 @@ public class DocumentServiceImpl implements DocumentService {
         if (application.getSesCode().equals(sesCode.toString()))
             return true;
         return false;
+    }
+
+    private File saveToFile(Long applicationId, String type, Object data) {
+        log.info("Saving to file");
+
+        String directoryPath = absoluteDirectory + "/" + applicationId + "/";
+        String fileName = type + ".txt";
+        File directory = new File(directoryPath);
+
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        File file = new File(directory, fileName);
+
+        try {
+            String dataJson = objectMapper.writeValueAsString(data);
+            Files.write(file.toPath(), dataJson.getBytes());
+            log.info("Data saved to file: {}", file.getAbsolutePath());
+        } catch (Exception e) {
+            log.error("Error converting data to JSON or writing to file: {}", e.getMessage(), e);
+        }
+
+        return file;
     }
 }

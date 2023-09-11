@@ -9,6 +9,7 @@ import com.neoflex.deal.model.StatusHistory;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import com.neoflex.deal.model.enums.ChangeType;
 
+import java.io.File;
 import java.util.List;
 
 public interface DealService {

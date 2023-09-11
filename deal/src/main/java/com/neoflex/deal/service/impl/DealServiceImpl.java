@@ -1,5 +1,6 @@
 package com.neoflex.deal.service.impl;
 
+import com.neoflex.deal.client.ConveyorClient;
 import com.neoflex.deal.dto.api.request.EmploymentDTO;
 import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
@@ -8,6 +9,8 @@ import com.neoflex.deal.dto.api.response.CreditDTO;
 import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.dto.enums.EmailThemeType;
 import com.neoflex.deal.exception.DealException;
+import com.neoflex.deal.mapper.CreditMapper;
+import com.neoflex.deal.mapper.EmploymentMapper;
 import com.neoflex.deal.mapper.LoanOfferMapper;
 import com.neoflex.deal.mapper.ScoringDataMapper;
 import com.neoflex.deal.model.*;
@@ -17,19 +20,19 @@ import com.neoflex.deal.model.enums.CreditStatus;
 import com.neoflex.deal.producer.DocumentProducer;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.ClientRepository;
-import com.neoflex.deal.client.ConveyorClient;
 import com.neoflex.deal.repository.CreditRepository;
 import com.neoflex.deal.service.DealService;
-import com.neoflex.deal.mapper.CreditMapper;
-import com.neoflex.deal.mapper.EmploymentMapper;
 import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -45,6 +48,12 @@ public class DealServiceImpl implements DealService {
     private final LoanOfferMapper loanOfferMapper;
     private final ScoringDataMapper scoringDataMapper;
     private final DocumentProducer documentProducer;
+
+    @Value("${credit.minRate}")
+    private BigDecimal minRate;
+
+    @Value("${credit.maxRate}")
+    private BigDecimal maxRate;
 
     private Client createClient(LoanApplicationRequestDTO requestDTO) {
         log.info("Creating client");
@@ -124,10 +133,11 @@ public class DealServiceImpl implements DealService {
         log.info("Building application history");
         histories.add(buildApplicationHistory(ApplicationStatus.APPROVED, ChangeType.AUTOMATIC));
         application.setStatusHistory(histories);
-        documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.FINISH_REGISTRATION));
 
         applicationRepository.save(application);
         log.info("Application updated");
+
+        documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.FINISH_REGISTRATION));
 
         return application;
     }
@@ -155,7 +165,7 @@ public class DealServiceImpl implements DealService {
         ScoringDataDTO scoringDataDTO = scoringDataMapper.mapToScoringDataDTO(application, client, requestDTO);
         CreditDTO creditDTO = conveyorClient.getCalculation(scoringDataDTO);
         updateCreditByCreditDTO(creditDTO, application);
-
+        denialCheck(application);
         log.info("Credit calculated");
 
         return creditDTO;
@@ -183,5 +193,17 @@ public class DealServiceImpl implements DealService {
         applicationRepository.save(application);
 
         log.info("Credit updated");
+    }
+
+    private void denialCheck(Application application) {
+        boolean isGreaterThan = application.getCredit().getRate().compareTo(maxRate) > 0;
+        boolean isLessThan = application.getCredit().getRate().compareTo(minRate) < 0;
+        if (isGreaterThan || isLessThan) {
+            application.setStatus(ApplicationStatus.CC_DENIED);
+            documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.APPLICATION_DENIED));
+        } else {
+            application.setStatus(ApplicationStatus.CC_APPROVED);
+            documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.CREATE_DOCUMENTS));
+        }
     }
 }
