@@ -6,16 +6,13 @@ import com.neoflex.deal.exception.DealException;
 import com.neoflex.deal.exception.SesException;
 import com.neoflex.deal.model.Application;
 import com.neoflex.deal.model.Credit;
-import com.neoflex.deal.model.StatusHistory;
 import com.neoflex.deal.model.enums.ApplicationStatus;
-import com.neoflex.deal.model.enums.ChangeType;
 import com.neoflex.deal.model.enums.CreditStatus;
 import com.neoflex.deal.producer.DocumentProducer;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.CreditRepository;
 import com.neoflex.deal.service.DealService;
 import com.neoflex.deal.service.DocumentService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +21,6 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -52,31 +48,26 @@ public class DocumentServiceImpl implements DocumentService {
         Optional<Application> optApplication = applicationRepository.findById(applicationId);
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
 
-        application.setStatus(ApplicationStatus.PREPARE_DOCUMENTS);
-        applicationRepository.save(application);
+        applicationRepository.save(dealService.updateApplicationStatusAndHistory(ApplicationStatus.PREPARE_DOCUMENTS, application));
 
-        saveToFile(application.getApplicationId(), "credit", application.getCredit().toString());
-        saveToFile(application.getApplicationId(), "client", application.getClient().toString());
-        saveToFile(application.getApplicationId(), "paymentSchedule", application.getCredit().getPaymentSchedule().toString());
+        saveToFile(application.getApplicationId(), "credit", application.getCredit());
+        saveToFile(application.getApplicationId(), "client", application.getClient());
+        saveToFile(application.getApplicationId(), "paymentSchedule", application.getCredit().getPaymentSchedule());
+        applicationRepository.save(dealService.updateApplicationStatusAndHistory(ApplicationStatus.DOCUMENT_CREATED, application));
 
         documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.SEND_DOCUMENTS));
         log.info("Document has been successfully sent to DocumentProducer");
     }
 
     @Override
-    @Transactional
     public void requestDocumentSigning(Long applicationId) {
         log.info("Received SEND_SES. Sending request to DocumentProducer");
 
         Optional<Application> optApplication = applicationRepository.findById(applicationId);
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
+        applicationRepository.save(generateSesCode(application));
 
-        String sesCode = generateSesCode();
-        application.setSesCode(sesCode);
-        log.info("Ses code {} for application #{} was generated", sesCode, applicationId);
-        applicationRepository.save(application);
-
-        saveToFile(application.getApplicationId(), "ses", application.getSesCode().toString());
+        saveToFile(application.getApplicationId(), "ses", application.getSesCode());
         documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.SEND_SES));
         log.info("Document has been successfully sent to DocumentProducer");
     }
@@ -87,15 +78,12 @@ public class DocumentServiceImpl implements DocumentService {
 
         Optional<Application> optApplication = applicationRepository.findById(applicationId);
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
-        List<StatusHistory> statusHistoryList = application.getStatusHistory();
 
         if (checkSesCode(application, sesCode)) {
             application = updateCredit(application, CreditStatus.ISSUED);
             application.setSesCode(sesCode.toString());
-            application.setStatus(ApplicationStatus.DOCUMENT_SIGNED);
             application.setSignDate(LocalDateTime.now());
-            statusHistoryList.add(dealService.buildApplicationHistory(ApplicationStatus.DOCUMENT_SIGNED, ChangeType.AUTOMATIC));
-            applicationRepository.save(application);
+            applicationRepository.save(dealService.updateApplicationStatusAndHistory(ApplicationStatus.DOCUMENT_SIGNED, application));
 
             documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.CREDIT_ISSUED));
             log.info("Document has been successfully sent to DocumentProducer");
@@ -120,18 +108,19 @@ public class DocumentServiceImpl implements DocumentService {
         return applicationRepository.save(application);
     }
 
-    private String generateSesCode() {
+    private Application generateSesCode(Application application) {
+        log.info("Generating SES code");
         Random random = new Random();
         int min = 1000;
         int max = 10000;
+        application.setSesCode(String.valueOf(random.nextInt((max - min) + 1) + min));
 
-        return String.valueOf(random.nextInt((max - min) + 1) + min);
+        log.info("SES code was generated");
+        return application;
     }
 
     private boolean checkSesCode(Application application, Integer sesCode) {
-        if (application.getSesCode().equals(sesCode.toString()))
-            return true;
-        return false;
+        return application.getSesCode().equals(sesCode.toString());
     }
 
     private File saveToFile(Long applicationId, String type, Object data) {
@@ -148,7 +137,7 @@ public class DocumentServiceImpl implements DocumentService {
         File file = new File(directory, fileName);
 
         try {
-            String dataJson = objectMapper.writeValueAsString(data);
+            String dataJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
             Files.write(file.toPath(), dataJson.getBytes());
             log.info("Data saved to file: {}", file.getAbsolutePath());
         } catch (Exception e) {

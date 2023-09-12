@@ -9,7 +9,6 @@ import com.neoflex.deal.model.StatusHistory;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import com.neoflex.deal.model.enums.ChangeType;
 
-import java.io.File;
 import java.util.List;
 
 public interface DealService {
@@ -42,4 +41,12 @@ public interface DealService {
      * @return
      */
     StatusHistory buildApplicationHistory(ApplicationStatus status, ChangeType type);
+
+    /**
+     * Updates application status and history
+     * @param status
+     * @param application
+     * @return
+     */
+    Application updateApplicationStatusAndHistory(ApplicationStatus status, Application application);
 }

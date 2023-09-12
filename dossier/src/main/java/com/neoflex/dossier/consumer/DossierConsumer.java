@@ -8,6 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -68,14 +72,20 @@ public class DossierConsumer {
     @KafkaListener(topics = "send-ses", groupId = "deal")
     public void listenSendSes(EmailMessageDTO emailMessageDTO) {
         log.info("Request for send ses received: " + emailMessageDTO.toString());
-        String body = "Код для подписания завки №" + emailMessageDTO.getApplicationId() + " был сгенерирован.";
-        String[] path = {absolutePath +  emailMessageDTO.getApplicationId() + "/ses.txt"};
+        String body = "Код для подписания завки №" + emailMessageDTO.getApplicationId() + " был сгенерирован: ";
+        String path = absolutePath +  emailMessageDTO.getApplicationId() + "/ses.txt";
 
-        emailService.sendEmailWithAttachments(
+        try {
+            String fileContents = new String(Files.readAllBytes(Paths.get(path)));
+            body += fileContents.replaceAll("\"", "");
+        } catch (IOException e) {
+            log.error("Error reading the file: " + e.getMessage());
+        }
+
+        emailService.sendEmail(
                 emailMessageDTO.getAddress(),
                 emailMessageDTO.getTheme().toString(),
-                body,
-                path
+                body
         );
 
         log.info("Sent email request to EmailService for send ses");

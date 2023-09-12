@@ -32,7 +32,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -125,14 +124,8 @@ public class DealServiceImpl implements DealService {
         Optional<Application> optApplication = applicationRepository.findById(loanOffer.getApplicationId());
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
 
-        application.setStatus(ApplicationStatus.APPROVED);
         application.setAppliedOffer(loanOfferMapper.mapToLoanOffer(loanOffer));
-
-        List<StatusHistory> histories = application.getStatusHistory();
-
-        log.info("Building application history");
-        histories.add(buildApplicationHistory(ApplicationStatus.APPROVED, ChangeType.AUTOMATIC));
-        application.setStatusHistory(histories);
+        application = updateApplicationStatusAndHistory(ApplicationStatus.APPROVED, application);
 
         applicationRepository.save(application);
         log.info("Application updated");
@@ -198,12 +191,28 @@ public class DealServiceImpl implements DealService {
     private void denialCheck(Application application) {
         boolean isGreaterThan = application.getCredit().getRate().compareTo(maxRate) > 0;
         boolean isLessThan = application.getCredit().getRate().compareTo(minRate) < 0;
+        ApplicationStatus status;
+
         if (isGreaterThan || isLessThan) {
-            application.setStatus(ApplicationStatus.CC_DENIED);
+            status = ApplicationStatus.CC_DENIED;
             documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.APPLICATION_DENIED));
         } else {
-            application.setStatus(ApplicationStatus.CC_APPROVED);
+            status = ApplicationStatus.CC_APPROVED;
             documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.CREATE_DOCUMENTS));
         }
+        applicationRepository.save(updateApplicationStatusAndHistory(status, application));
+    }
+
+    public Application updateApplicationStatusAndHistory(ApplicationStatus status, Application application) {
+        application.setStatus(status);
+        updateApplicationStatusHistory(status, application);
+
+        return application;
+    }
+
+    private void updateApplicationStatusHistory(ApplicationStatus status, Application application) {
+        List<StatusHistory> histories = application.getStatusHistory();
+        histories.add(buildApplicationHistory(status, ChangeType.AUTOMATIC));
+        application.setStatusHistory(histories);
     }
 }
