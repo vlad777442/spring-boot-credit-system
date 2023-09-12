@@ -1,8 +1,8 @@
 server:
-  port: 8091
+  port: 8191
 
 service:
   integration:
     deal:
-      url: "http://localhost:8090/deal"
+      url: "http://localhost:8190/deal"
 

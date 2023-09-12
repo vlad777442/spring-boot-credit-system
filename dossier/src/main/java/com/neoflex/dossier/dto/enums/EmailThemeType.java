@@ -1,4 +1,4 @@
-package com.neoflex.deal.dto.enums;
+package com.neoflex.dossier.dto.enums;
 
 public enum EmailThemeType {
     FINISH_REGISTRATION,

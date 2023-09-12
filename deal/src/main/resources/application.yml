@@ -10,11 +10,20 @@ spring:
     show-sql: true
   liquibase:
     change-log: classpath:/db/changelog/changelog-master.xml
+  kafka:
+    bootstrap-servers: localhost:9092
 
 server:
-  port: 8090
+  port: 8190
 
 service:
   integration:
     conveyor:
-      url: "http://localhost:8080/conveyor"
+      url: "http://localhost:8181/conveyor"
+
+deal:
+  dataPath: "D:/creditConveyor/deal/"
+
+credit:
+  minRate: 5.0
+  maxRate: 40.0

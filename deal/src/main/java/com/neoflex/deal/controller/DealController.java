@@ -49,5 +49,4 @@ public class DealController {
 
         return dealService.calculateCreditByApplicationId(applicationId, requestDTO);
     }
-
 }
