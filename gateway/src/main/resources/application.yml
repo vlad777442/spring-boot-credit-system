@@ -1,0 +1,9 @@
+server:
+  port: 8390
+
+service:
+  integration:
+    deal:
+      url: "http://localhost:8190/deal"
+    application:
+      url: "http://localhost:8191/application"
