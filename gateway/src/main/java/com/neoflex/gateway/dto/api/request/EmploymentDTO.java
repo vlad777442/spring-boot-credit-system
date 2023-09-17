@@ -1,8 +1,8 @@
 package com.neoflex.gateway.dto.api.request;
 
 
-import com.neoflex.gateway.dto.enums.EmploymentStatus;
 import com.neoflex.gateway.dto.enums.PositionType;
+import com.neoflex.gateway.model.enums.EmploymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

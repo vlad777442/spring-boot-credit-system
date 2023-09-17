@@ -1,5 +1,7 @@
 # API-Gateway
 
+![Starting](/images/sequence.png)
+
 ## API endpoints:
 
 ### POST

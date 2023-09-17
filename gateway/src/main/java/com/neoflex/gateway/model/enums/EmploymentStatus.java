@@ -1,4 +1,4 @@
-package com.neoflex.gateway.dto.enums;
+package com.neoflex.gateway.model.enums;
 
 public enum EmploymentStatus {
     UNEMPLOYED,

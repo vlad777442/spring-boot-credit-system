@@ -1,40 +1,20 @@
 package com.neoflex.gateway.controller;
 
-import com.neoflex.gateway.client.ApplicationClient;
 import com.neoflex.gateway.client.DealClient;
 import com.neoflex.gateway.dto.api.request.FinishRegistrationRequestDTO;
-import com.neoflex.gateway.dto.api.request.LoanApplicationRequestDTO;
 import com.neoflex.gateway.dto.api.response.CreditDTO;
-import com.neoflex.gateway.dto.api.response.LoanOfferDTO;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/gateway")
 @RequiredArgsConstructor
 @Slf4j
-public class GatewayController {
+@Tag(name = "Deal Document Controller")
+public class DocumentController {
     private final DealClient dealClient;
-    private final ApplicationClient applicationClient;
-
-    @Operation(summary = "Получение списка 4 возможных займов")
-    @PostMapping("/")
-    public List<LoanOfferDTO> getOffers(@RequestBody @Valid LoanApplicationRequestDTO requestDTO) {
-        log.info("Requesting loan offers from MC Application");
-        return applicationClient.getOffers(requestDTO);
-    }
-
-    @Operation(summary = "Выбор одного из предложений")
-    @PutMapping("/offer")
-    public void applyApplication(@RequestBody @Valid LoanOfferDTO loanOfferDTO) {
-        log.info("Sending apply loan offer to MC Application");
-        applicationClient.applyApplication(loanOfferDTO);
-    }
 
     @Operation(summary = "Завершение регистрации и расчет условий кредита")
     @PutMapping("/calculate/{applicationId}")
