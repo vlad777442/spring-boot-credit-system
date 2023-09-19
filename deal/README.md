@@ -7,8 +7,10 @@
 ![Starting](/images/schema.png)
 
 
+
 ## API endpoints:
 
+### Deal Controller
 ### POST
 
 * #### /deal/application
@@ -36,3 +38,32 @@
 5. На основе полученного из кредитного конвейера CreditDTO создаётся сущность Credit и сохраняется в базу со статусом CALCULATED.
 6. В заявке обновляется статус, история статусов.
 7. Заявка сохраняется.
+
+### Document Controller
+### PUT
+
+* #### /deal/document/{applicationId}/send
+
+Запрос на отправку документов.
+
+* #### /deal/document/{applicationId}/sign
+
+Запрос на подписание документов.
+
+* #### /deal/document/{applicationId}/code
+
+Подписание документов по SES коду.
+
+### Admin Controller
+### GET
+
+* #### /deal/admin/application/{applicationId}
+
+Получение заявки по id.
+
+* #### /deal/admin/application
+
+Получение всех заявок.
+
+
+

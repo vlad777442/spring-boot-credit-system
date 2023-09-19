@@ -1,4 +1,4 @@
-package com.neoflex.deal.model.enums;
+package com.neoflex.gateway.model.enums;
 
 public enum ApplicationStatus {
     PREAPPROVAL,
@@ -6,8 +6,8 @@ public enum ApplicationStatus {
     CC_DENIED,
     CC_APPROVED,
     PREPARE_DOCUMENTS,
-    DOCUMENTS_CREATED,
+    DOCUMENT_CREATED,
     CLIENT_DENIED,
-    DOCUMENTS_SIGNED,
+    DOCUMENT_SIGNED,
     CREDIT_ISSUED
 }

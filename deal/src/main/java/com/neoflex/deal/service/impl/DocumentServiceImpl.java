@@ -53,7 +53,7 @@ public class DocumentServiceImpl implements DocumentService {
         saveToFile(application.getApplicationId(), "credit", application.getCredit());
         saveToFile(application.getApplicationId(), "client", application.getClient());
         saveToFile(application.getApplicationId(), "paymentSchedule", application.getCredit().getPaymentSchedule());
-        applicationRepository.save(dealService.updateApplicationStatusAndHistory(ApplicationStatus.DOCUMENT_CREATED, application));
+        applicationRepository.save(dealService.updateApplicationStatusAndHistory(ApplicationStatus.DOCUMENTS_CREATED, application));
 
         documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.SEND_DOCUMENTS));
         log.info("Document has been successfully sent to DocumentProducer");
@@ -83,7 +83,7 @@ public class DocumentServiceImpl implements DocumentService {
             application = updateCredit(application, CreditStatus.ISSUED);
             application.setSesCode(sesCode.toString());
             application.setSignDate(LocalDateTime.now());
-            applicationRepository.save(dealService.updateApplicationStatusAndHistory(ApplicationStatus.DOCUMENT_SIGNED, application));
+            applicationRepository.save(dealService.updateApplicationStatusAndHistory(ApplicationStatus.DOCUMENTS_SIGNED, application));
 
             documentProducer.send(documentProducer.createEmailMessageDTO(application, EmailThemeType.CREDIT_ISSUED));
             log.info("Document has been successfully sent to DocumentProducer");
