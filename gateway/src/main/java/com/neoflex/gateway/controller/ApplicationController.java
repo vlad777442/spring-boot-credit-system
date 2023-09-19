@@ -8,10 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Application Controller")
+@RequestMapping("/application")
 public class ApplicationController {
     private final ApplicationClient applicationClient;
 
@@ -30,7 +28,7 @@ public class ApplicationController {
     }
 
     @Operation(summary = "Выбор одного из предложений")
-    @PutMapping("/offer")
+    @PutMapping("/apply")
     public void applyApplication(@RequestBody @Valid LoanOfferDTO loanOfferDTO) {
         log.info("Sending apply loan offer to MC Application");
         applicationClient.applyApplication(loanOfferDTO);

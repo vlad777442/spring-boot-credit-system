@@ -17,7 +17,7 @@ public class DocumentController {
     private final DealClient dealClient;
 
     @Operation(summary = "Завершение регистрации и расчет условий кредита")
-    @PutMapping("/calculate/{applicationId}")
+    @PostMapping("application/registration/{applicationId}")
     public CreditDTO calculateCreditByApplicationId(@PathVariable Long applicationId,
                                                     @RequestBody FinishRegistrationRequestDTO requestDTO) {
         log.info("Sending request to calculate credit details to MC Deal");
@@ -38,7 +38,7 @@ public class DocumentController {
         dealClient.requestDocumentSigning(applicationId);
     }
 
-    @Operation(summary = "Подписание документов")
+    @Operation(summary = "Подписание документов с помощью кода")
     @PostMapping("/{applicationId}/code")
     public void signDocumentByCode(@PathVariable Long applicationId, @RequestBody Integer sesCode) {
         log.info("Sending request to sign document by code {} to MC Deal", applicationId);
