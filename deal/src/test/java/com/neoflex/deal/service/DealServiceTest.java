@@ -1,10 +1,8 @@
 package com.neoflex.deal.service;
 
 import com.neoflex.deal.client.ConveyorClient;
-import com.neoflex.deal.dto.api.request.EmploymentDTO;
-import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
-import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
-import com.neoflex.deal.dto.api.request.ScoringDataDTO;
+import com.neoflex.deal.config.properties.DealProperties;
+import com.neoflex.deal.dto.api.request.*;
 import com.neoflex.deal.dto.api.response.CreditDTO;
 import com.neoflex.deal.dto.api.response.LoanOfferDTO;
 import com.neoflex.deal.dto.enums.GenderType;
@@ -18,6 +16,7 @@ import com.neoflex.deal.model.*;
 import com.neoflex.deal.model.enums.ApplicationStatus;
 import com.neoflex.deal.model.enums.ChangeType;
 import com.neoflex.deal.model.enums.EmploymentStatus;
+import com.neoflex.deal.producer.DocumentProducer;
 import com.neoflex.deal.repository.ApplicationRepository;
 import com.neoflex.deal.repository.ClientRepository;
 import com.neoflex.deal.repository.CreditRepository;
@@ -28,6 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DealServiceTest {
@@ -72,7 +72,16 @@ class DealServiceTest {
     private LoanOfferMapper loanOfferMapper;
 
     @Spy
-    ScoringDataMapper scoringDataMapper;
+    private ScoringDataMapper scoringDataMapper;
+
+    @Mock
+    private DealProperties dealProperties;
+
+    @Mock
+    private KafkaTemplate<String, EmailMessageDTO> kafkaTemplate;
+
+    @Mock
+    private DocumentProducer documentProducer;
 
     private LoanApplicationRequestDTO getLoanApplicationRequestDTO() {
         return LoanApplicationRequestDTO.builder()
@@ -292,11 +301,16 @@ class DealServiceTest {
 
     @Test
     void calculateCreditByApplicationId() {
-        Optional<Application> application = Optional.of(getApplication());
-        application.get().setAppliedOffer(getLoanOffer());
-        when(applicationRepository.findById(1L)).thenReturn(application);
+        Application application = getApplication();
+
+        application.setAppliedOffer(getLoanOffer());
+        application.setCredit(getCredit());
+        lenient().when(dealProperties.getMaxRate()).thenReturn(BigDecimal.valueOf(40));
+        lenient().when(dealProperties.getMinRate()).thenReturn(BigDecimal.valueOf(5));
+        when(applicationRepository.findById(1L)).thenReturn(Optional.of(application));
         when(conveyorClient.getCalculation(any(ScoringDataDTO.class))).thenReturn(getCreditDTO());
         when(creditMapper.mapCredit(any(CreditDTO.class))).thenReturn(getCredit());
+        doNothing().when(documentProducer).send(any());
 
         CreditDTO actual = dealService.calculateCreditByApplicationId(1L, getFinishRegistrationRequestDTO());
 
