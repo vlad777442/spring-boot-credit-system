@@ -1,6 +1,5 @@
 package com.neoflex.gateway.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.neoflex.gateway.model.enums.ApplicationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
