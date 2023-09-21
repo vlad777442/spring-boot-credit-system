@@ -1,6 +1,7 @@
 package com.neoflex.deal.service.impl;
 
 import com.neoflex.deal.client.ConveyorClient;
+import com.neoflex.deal.config.properties.DealProperties;
 import com.neoflex.deal.dto.api.request.EmploymentDTO;
 import com.neoflex.deal.dto.api.request.FinishRegistrationRequestDTO;
 import com.neoflex.deal.dto.api.request.LoanApplicationRequestDTO;
@@ -26,10 +27,8 @@ import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -47,12 +46,8 @@ public class DealServiceImpl implements DealService {
     private final LoanOfferMapper loanOfferMapper;
     private final ScoringDataMapper scoringDataMapper;
     private final DocumentProducer documentProducer;
+    private final DealProperties dealProperties;
 
-    @Value("${credit.minRate}")
-    private BigDecimal minRate;
-
-    @Value("${credit.maxRate}")
-    private BigDecimal maxRate;
 
     private Client createClient(LoanApplicationRequestDTO requestDTO) {
         log.info("Creating client");
@@ -125,6 +120,7 @@ public class DealServiceImpl implements DealService {
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
 
         application.setAppliedOffer(loanOfferMapper.mapToLoanOffer(loanOffer));
+
         application = updateApplicationStatusAndHistory(ApplicationStatus.APPROVED, application);
 
         applicationRepository.save(application);
@@ -189,8 +185,8 @@ public class DealServiceImpl implements DealService {
     }
 
     private void denialCheck(Application application) {
-        boolean isGreaterThan = application.getCredit().getRate().compareTo(maxRate) > 0;
-        boolean isLessThan = application.getCredit().getRate().compareTo(minRate) < 0;
+        boolean isGreaterThan = application.getCredit().getRate().compareTo(dealProperties.getMaxRate()) > 0;
+        boolean isLessThan = application.getCredit().getRate().compareTo(dealProperties.getMinRate()) < 0;
         ApplicationStatus status;
 
         if (isGreaterThan || isLessThan) {

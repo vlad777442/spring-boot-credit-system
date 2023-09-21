@@ -1,0 +1,117 @@
+version: '3'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+    networks:
+      - default
+
+  kafka-server-1:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-server-1
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-server-1:9092,PLAINTEXT_HOST://kafka-server-1:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - default
+
+  conveyor:
+    container_name: conveyor
+    build: conveyor
+    ports:
+      - 8181:8181
+    networks:
+      - default
+
+  application:
+    container_name: application
+    build: application
+    environment:
+      SERVICE_INTEGRATION_DEAL_URL: http://deal:8190/deal
+    ports:
+      - 8191:8191
+    networks:
+      - default
+
+  gateway:
+    container_name: gateway
+    build: gateway
+    environment:
+      SERVICE_INTEGRATION_DEAL_URL: http://deal:8190/deal
+      SERVICE_INTEGRATION_APPLICATION_URL: http://application:8191/application
+    depends_on:
+      - deal
+    ports:
+      - 8390:8390
+    networks:
+      - default
+
+  dossier:
+    container_name: dossier
+    build: dossier
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka-server-1:9092
+      DEAL_DATAPATH: /creditConveyor/deal/
+    depends_on: 
+      - kafka-server-1
+    ports:
+      - 8380:8380
+    volumes:
+      - data-volume:/creditConveyor/deal/
+    networks:
+      - default
+
+  deal:
+    container_name: deal
+    build: deal
+    depends_on:
+      - kafka-server-1
+      - db
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka-server-1:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/dealDB
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVICE_INTEGRATION_CONVEYOR_URL: http://conveyor:8181/conveyor
+      DEAL_DATAPATH: /creditConveyor/deal/
+    ports:
+      - 8190:8190
+    volumes:
+      - data-volume:/creditConveyor/deal/
+    networks:
+      - default
+
+  db:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dealDB
+    ports:
+      - 5432:5432
+    volumes:
+      - .:/var/lib/postgresql
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  data-volume:
+    external: false
