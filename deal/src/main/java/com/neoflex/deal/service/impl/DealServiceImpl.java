@@ -120,6 +120,7 @@ public class DealServiceImpl implements DealService {
         Application application = optApplication.orElseThrow(() -> new DealException("The application does not exist"));
 
         application.setAppliedOffer(loanOfferMapper.mapToLoanOffer(loanOffer));
+
         application = updateApplicationStatusAndHistory(ApplicationStatus.APPROVED, application);
 
         applicationRepository.save(application);
