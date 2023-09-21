@@ -37,7 +37,7 @@ jobs:
         run: mvn -B clean install --file pom.xml
 
   sonarcloud:
-    name: Build and analyze
+    name: SonarCloud analysis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -101,7 +101,7 @@ jobs:
         working-directory: ./application
         run: mvn -B clean verify
 
-      - name: Application Coverage
+      - name: Application Coverage with Codecov
         uses: codecov/codecov-action@v3
         with:
           directory: ./application
@@ -112,7 +112,7 @@ jobs:
         working-directory: ./conveyor
         run: mvn -B clean verify
 
-      - name: Conveyor Coverage
+      - name: Conveyor Coverage with Codecov
         uses: codecov/codecov-action@v3
         with:
           directory: ./conveyor
@@ -123,7 +123,7 @@ jobs:
         working-directory: ./deal
         run: mvn -B clean verify
 
-      - name: Deal Coverage
+      - name: Deal Coverage with Codecov
         uses: codecov/codecov-action@v3
         with:
           directory: ./deal
@@ -134,7 +134,7 @@ jobs:
         working-directory: ./dossier
         run: mvn -B clean verify
 
-      - name: Dossier Coverage
+      - name: Dossier Coverage with Codecov
         uses: codecov/codecov-action@v3
         with:
           directory: ./dossier
@@ -145,7 +145,7 @@ jobs:
         working-directory: ./gateway
         run: mvn -B clean verify
 
-      - name: Gateway Coverage
+      - name: Gateway Coverage with Codecov
         uses: codecov/codecov-action@v3
         with:
           directory: ./gateway
